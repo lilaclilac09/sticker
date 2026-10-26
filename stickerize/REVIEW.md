@@ -72,7 +72,7 @@ See `README.md` for the layout. In short:
 
 ## 4. Verification
 
-- `swift test` on macOS: **58 tests** pass: core 38, Vision/outline 12, export 8.
+- `swift test` on macOS: **61 tests** pass: core 41, Vision/outline 12, export 8.
 - The same bundles run **inside the iOS 27.2 simulator** (`simctl spawn … xctest`): core 38/38 and export 8/8 pass. Outlines 3/3
   pass, and the 9 Vision tests skip as expected.
 - `xcodebuild` builds for the simulator and for device (`CODE_SIGNING_ALLOWED=NO`, compile only) with **zero warnings**.
@@ -135,3 +135,16 @@ Found in the simulator rather than by the reviewers:
 - The disabled "Remove Background" switch showed on when Vision was unavailable.
 - Vision's raw error text was shown to users.
 - Grid tiles weren't square.
+
+## 7. Found in device testing
+
+- **The iMessage app showed no stickers.** The extension assigned `stickerBrowserView.dataSource` on an
+  `MSStickerBrowserViewController` it owned. Before the controller's view loads, `stickerBrowserView` isn't there yet,
+  so that assignment was silently dropped. When the view loads, the controller makes itself the data source and reports
+  zero stickers. Both steps were reproduced in the iOS 27.2 simulator. The fix is Apple's documented pattern: a subclass
+  that overrides `numberOfStickers(in:)` and `stickerBrowserView(_:stickerAt:)`. The simulator shows its count reaching
+  the browser view. The extension also reloads when its size changes, reads the library without file coordination (it
+  never writes), and logs how many stickers it loaded (subsystem: the extension's bundle ID, category `stickers`).
+- **Photos imports were always named "Sticker".** The picked file's name was discarded. Imports now keep the delivered
+  file name and convert it (`StickerName`): "funny_cat.png" becomes "funny cat". Camera, screenshot and temporary names
+  such as `IMG_1234` still get "Sticker".

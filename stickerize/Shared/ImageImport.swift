@@ -64,7 +64,7 @@ enum ImageImport {
                 do { try FileManager.default.copyItem(at: readURL, to: copy) } catch { copyError = error }
             }
             if let error = coordinationError ?? copyError { throw error }
-            return try image(ownedFile: copy, name: url.deletingPathExtension().lastPathComponent, maxPixelSize: maxPixelSize)
+            return try image(ownedFile: copy, name: url.lastPathComponent, maxPixelSize: maxPixelSize)
         }.value
     }
 
@@ -75,8 +75,10 @@ enum ImageImport {
         var failures = 0
         for provider in providers {
             do {
-                let url = try await provider.copyImageFile()
-                images.append(try image(ownedFile: url, name: provider.suggestedName, maxPixelSize: maxPixelSize))
+                let copy = try await provider.copyImageFile()
+                // Photos and Files give the file's name as suggestedName; otherwise use the delivered file's name.
+                let name = StickerName.fromFileName(provider.suggestedName) != nil ? provider.suggestedName : copy.originalName
+                images.append(try image(ownedFile: copy.url, name: name, maxPixelSize: maxPixelSize))
             } catch {
                 failures += 1
             }
@@ -102,25 +104,24 @@ enum ImageImport {
         return pathExtension.isEmpty ? url : url.appendingPathExtension(pathExtension)
     }
 
+    /// The file's name as a sticker name ("funny_cat.png" → "funny cat"); generated names such as IMG_1234 give
+    /// the default name instead.
     static func suggestedName(from fileName: String?) -> String {
-        guard let fileName = fileName?.trimmingCharacters(in: .whitespacesAndNewlines), !fileName.isEmpty else {
-            return String(localized: "Sticker")
-        }
-        // Camera roll names like IMG_1234 aren't useful as a sticker description.
-        let generic = ["IMG_", "IMG-", "PXL_", "DSC", "Screenshot", "image", "Photo"]
-        return generic.contains(where: { fileName.hasPrefix($0) }) ? String(localized: "Sticker") : fileName
+        StickerName.fromFileName(fileName) ?? StickerName.fallback
     }
 }
 
 /// A picked photo received as a file, so its bytes never have to sit in memory (`PhotosPickerItem.loadTransferable`).
 struct ImportedFile: Transferable {
     let url: URL
+    /// The name Photos delivered the file under (the asset's file name, e.g. "funny_cat.png").
+    let originalName: String
 
     static var transferRepresentation: some TransferRepresentation {
         FileRepresentation(importedContentType: .image) { received in
             let copy = try ImageImport.temporaryURL(pathExtension: received.file.pathExtension)
             try FileManager.default.copyItem(at: received.file, to: copy)
-            return ImportedFile(url: copy)
+            return ImportedFile(url: copy, originalName: received.file.lastPathComponent)
         }
     }
 }
@@ -132,8 +133,9 @@ extension NSItemProvider {
 
     /// Copies the most specific image (or PDF) representation into our temporary directory. File representations
     /// are copied on disk; only providers that offer nothing but in-memory data are written out from memory.
+    /// `originalName` is the name the file was delivered under, when there was a file.
     @MainActor
-    func copyImageFile() async throws -> URL {
+    func copyImageFile() async throws -> (url: URL, originalName: String?) {
         let registered = registeredTypeIdentifiers.compactMap(UTType.init)
         let type = registered.first { candidate in ImageImport.supportedTypes.contains { candidate.conforms(to: $0) } }
             ?? ImageImport.supportedTypes.first { hasItemConformingToTypeIdentifier($0.identifier) }
@@ -147,7 +149,7 @@ extension NSItemProvider {
                     do {
                         let copy = try ImageImport.temporaryURL(pathExtension: url.pathExtension.isEmpty ? extensionHint : url.pathExtension)
                         try FileManager.default.copyItem(at: url, to: copy)
-                        continuation.resume(returning: copy)
+                        continuation.resume(returning: (copy, url.lastPathComponent))
                     } catch {
                         continuation.resume(throwing: error)
                     }
@@ -161,7 +163,7 @@ extension NSItemProvider {
             }
             let copy = try ImageImport.temporaryURL(pathExtension: extensionHint)
             try data.write(to: copy)
-            return copy
+            return (copy, nil)
         }
     }
 }

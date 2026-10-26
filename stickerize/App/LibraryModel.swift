@@ -61,7 +61,7 @@ final class LibraryModel {
             guard let file = try await items[index].loadTransferable(type: ImportedFile.self) else {
                 throw ImageLoadingError.unreadable
             }
-            return try ImageImport.image(ownedFile: file.url, name: nil)
+            return try ImageImport.image(ownedFile: file.url, name: file.originalName)
         }
     }
 

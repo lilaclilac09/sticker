@@ -68,8 +68,8 @@ and registered by automatic signing (`REGISTER_APP_GROUPS`). Nothing else needs 
 cd stickerize/StickerizeKit && swift test
 ```
 
-58 tests cover decoding, orientation, normalization limits, the store, Vision lifting on the samples, outlines and the
-WebP/pack payloads. Vision tests run on the Mac only: Vision's instance masks don't run in the iOS Simulator.
+61 tests cover decoding, orientation, normalization limits, naming, the store, Vision lifting on the samples, outlines
+and the WebP/pack payloads. Vision tests run on the Mac only: Vision's instance masks don't run in the iOS Simulator.
 The scheme's Test action runs the same package tests plus the UI tests in the simulator.
 
 ## Turning it on

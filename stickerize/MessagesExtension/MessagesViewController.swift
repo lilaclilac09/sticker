@@ -1,4 +1,5 @@
 import Messages
+import os
 import StickerizeKit
 import UIKit
 
@@ -6,15 +7,15 @@ import UIKit
 /// onto a message bubble. The library reloads when the app (or the Share extension) changes it.
 final class MessagesViewController: MSMessagesAppViewController {
     private let store = StickerStore.makeDefault()
-    private var stickers: [MSSticker] = []
     private var observer: StickerChangeObserver?
-    private let browser = MSStickerBrowserViewController(stickerSize: .regular)
+    private let browser = StickerBrowserViewController(stickerSize: .regular)
     private let emptyState = UIStackView()
     private let emptyMessage = UILabel()
+    private var laidOutSize = CGSize.zero
+    private let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "Stickerize", category: "stickers")
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        browser.stickerBrowserView.dataSource = self
         addChild(browser)
         browser.view.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(browser.view)
@@ -41,13 +42,29 @@ final class MessagesViewController: MSMessagesAppViewController {
         reload()
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        // The drawer opens at compact height and is resized by the user; lay the grid out again for the real size
+        // (a sticker browser reloaded before it had a size has been reported to stay empty until the sheet is dragged).
+        guard view.bounds.size != laidOutSize, view.bounds.width > 0 else { return }
+        laidOutSize = view.bounds.size
+        browser.stickerBrowserView.reloadData()
+    }
+
     private func reload() {
-        let library = (try? store.stickers()) ?? []
-        stickers = library.compactMap { sticker in
+        // A plain read: the app replaces files atomically, and this extension never writes.
+        let library: [Sticker]
+        do {
+            library = try store.stickers(coordinated: false)
+        } catch {
+            log.error("Couldn't read the sticker library: \(error.localizedDescription, privacy: .public)")
+            library = []
+        }
+        browser.stickers = library.compactMap { sticker in
             try? MSSticker(contentsOfFileURL: store.fileURL(for: sticker), localizedDescription: sticker.name)
         }
-        browser.stickerBrowserView.reloadData()
-        emptyState.isHidden = !stickers.isEmpty
+        log.info("Loaded \(self.browser.stickers.count) of \(library.count) stickers from \(String(describing: self.store.location), privacy: .public)")
+        emptyState.isHidden = !browser.stickers.isEmpty
         if store.location == .local {
             emptyMessage.text = String(localized: "Stickerize can't reach its shared library. Reinstall the app, or check that the App Group is set up in the project.")
         } else {
@@ -105,12 +122,19 @@ final class MessagesViewController: MSMessagesAppViewController {
     }
 }
 
-extension MessagesViewController: @preconcurrency MSStickerBrowserViewDataSource {
-    func numberOfStickers(in stickerBrowserView: MSStickerBrowserView) -> Int {
+/// The sticker grid. MSStickerBrowserViewController makes itself its browser view's data source when its view loads,
+/// so a data source assigned from outside is replaced (and one assigned before the view loads is dropped). Checked in
+/// the iOS 27.2 simulator. Subclassing and overriding both methods, as Apple documents, is what works.
+final class StickerBrowserViewController: MSStickerBrowserViewController {
+    var stickers: [MSSticker] = [] {
+        didSet { if isViewLoaded { stickerBrowserView.reloadData() } }
+    }
+
+    override func numberOfStickers(in stickerBrowserView: MSStickerBrowserView) -> Int {
         stickers.count
     }
 
-    func stickerBrowserView(_ stickerBrowserView: MSStickerBrowserView, stickerAt index: Int) -> MSSticker {
+    override func stickerBrowserView(_ stickerBrowserView: MSStickerBrowserView, stickerAt index: Int) -> MSSticker {
         stickers[index]
     }
 }
