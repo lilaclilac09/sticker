@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>StickerizeAppGroup</key>
+	<string>$(APP_GROUP)</string>
+	<!-- Messages + media: the stickers show up in the system Stickers drawer (emoji keyboard in any app, FaceTime,
+	     Markup) as well as in Messages. With both, the extension always runs in the media context, where only
+	     inserting stickers is allowed, which is all this extension does. -->
+	<key>MSSupportedPresentationContexts</key>
+	<array>
+		<string>MSMessagesAppPresentationContextMessages</string>
+		<string>MSMessagesAppPresentationContextMedia</string>
+	</array>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.message-payload-provider</string>
+		<key>NSExtensionPrincipalClass</key>
+		<string>$(PRODUCT_MODULE_NAME).MessagesViewController</string>
+	</dict>
+</dict>
+</plist>

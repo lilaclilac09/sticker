@@ -1,0 +1,16 @@
+.DS_Store
+.claude/
+DerivedData/
+build/
+.build/
+.swiftpm/
+xcuserdata/
+*.xcuserstate
+stickerize/Config/Local.xcconfig
+
+# Local working notes and agent instructions: never committed
+HANDOFF.md
+CLAUDE.md
+AGENTS.md
+# Original tool, binary and its outputs, kept locally for reference
+stickerize/legacy/

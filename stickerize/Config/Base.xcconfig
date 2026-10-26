@@ -1,0 +1,28 @@
+// Shared by every target. Identity lives here so it changes in one place.
+//
+// To sign for a device, put your team (and, if needed, a different prefix) in Config/Local.xcconfig,
+// which is git-ignored:
+//
+//   DEVELOPMENT_TEAM = ABCDE12345
+//   BUNDLE_ID_PREFIX = com.example.stickerize
+
+BUNDLE_ID_PREFIX = ai.qokka.stickerize
+// The App Group the app and its extensions share. Also written into each Info.plist as StickerizeAppGroup,
+// which is what the code reads, so nothing else needs to change if you rename it.
+APP_GROUP = group.$(BUNDLE_ID_PREFIX)
+DEVELOPMENT_TEAM =
+CODE_SIGN_STYLE = Automatic
+// Lets automatic signing register APP_GROUP on the developer account.
+REGISTER_APP_GROUPS = YES
+
+MARKETING_VERSION = 1.0
+CURRENT_PROJECT_VERSION = 1
+IPHONEOS_DEPLOYMENT_TARGET = 17.0
+TARGETED_DEVICE_FAMILY = 1,2
+SDKROOT = iphoneos
+SUPPORTED_PLATFORMS = iphoneos iphonesimulator
+SWIFT_VERSION = 6.0
+ENABLE_USER_SCRIPT_SANDBOXING = YES
+LOCALIZATION_PREFERS_STRING_CATALOGS = YES
+
+#include? "Local.xcconfig"

@@ -1,0 +1,854 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B532161A1830EBFAF8AD5468 /* StickerizeKit in Frameworks */ = {isa = PBXBuildFile; productRef = 944AD763CD7ABD91CAB7DE6A /* StickerizeKit */; };
+		C8E05AC16157B5399A7B86FB /* StickerLift in Frameworks */ = {isa = PBXBuildFile; productRef = 966CBB520972790A4988BABA /* StickerLift */; };
+		33DB14E5D7129B3937FC7928 /* StickerExport in Frameworks */ = {isa = PBXBuildFile; productRef = FF5C5E24EBFE5CF255772229 /* StickerExport */; };
+		CDC0AA896BFF1DB311B478CA /* StickerizeKit in Frameworks */ = {isa = PBXBuildFile; productRef = AD7E79AA2F0F98E99AF6AE63 /* StickerizeKit */; };
+		C6AAA8758F55C454FFF5222B /* StickerizeKit in Frameworks */ = {isa = PBXBuildFile; productRef = F12F5779081D64B6EA166D7A /* StickerizeKit */; };
+		D0DF85101388C902887A609C /* StickerizeKit in Frameworks */ = {isa = PBXBuildFile; productRef = A77237075294E6382B40B2F2 /* StickerizeKit */; };
+		7F2BF4770438F93A7D734AAF /* StickerLift in Frameworks */ = {isa = PBXBuildFile; productRef = 3EA717EAEF463C644A939669 /* StickerLift */; };
+		304B1C7150DA1EF87370A730 /* StickerizeMessages.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 197D069F37356616ADD1415F /* StickerizeMessages.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		7E1615B301693E8B7DE67810 /* StickerizeKeyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BFA1E0F9152478D856BA6E4F /* StickerizeKeyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B8A8D9BB40067BC88177186E /* StickerizeShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 0C0FC2086DC1D5DE7D6D28CE /* StickerizeShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		5B1D83299DD1983A5F25B359 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 46F86FAA6BBF9AC94A7E4595 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F01C2E624E08A72BC055B46F;
+			remoteInfo = Stickerize;
+		};
+		E6EE38A40F735A62051F3878 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 46F86FAA6BBF9AC94A7E4595 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A200F17E73C1F637EB55292D;
+			remoteInfo = StickerizeMessages;
+		};
+		EC6D78DA369CCE12BEED328D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 46F86FAA6BBF9AC94A7E4595 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E74B63B46FD964E17DF743D4;
+			remoteInfo = StickerizeKeyboard;
+		};
+		42D35AEE37CAE24089D46183 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 46F86FAA6BBF9AC94A7E4595 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4C746F2D699A031CE4B1870E;
+			remoteInfo = StickerizeShare;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		FCF3278E84DC1D0913840280 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				304B1C7150DA1EF87370A730 /* StickerizeMessages.appex in Embed Foundation Extensions */,
+				7E1615B301693E8B7DE67810 /* StickerizeKeyboard.appex in Embed Foundation Extensions */,
+				B8A8D9BB40067BC88177186E /* StickerizeShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		49250341B6F9D3BD03DCCEA9 /* Stickerize.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stickerize.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		197D069F37356616ADD1415F /* StickerizeMessages.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = StickerizeMessages.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BFA1E0F9152478D856BA6E4F /* StickerizeKeyboard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = StickerizeKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		0C0FC2086DC1D5DE7D6D28CE /* StickerizeShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = StickerizeShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		CD40A90F8068BEFA833205D8 /* StickerizeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StickerizeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		06E874E7753D7338DCEA7827 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
+		8C708F6ADFB2B8B48ADDA8CA /* AppGroup.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AppGroup.entitlements; sourceTree = "<group>"; };
+		E8CD20030D436FD3E0A2E391 /* App-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "App-Info.plist"; sourceTree = "<group>"; };
+		129EC3E8CADE1D6CDC78B48D /* Messages-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Messages-Info.plist"; sourceTree = "<group>"; };
+		22F25C64FEEA3F81F7371BDA /* Keyboard-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Keyboard-Info.plist"; sourceTree = "<group>"; };
+		4453D7A15511015EB29A688D /* Share-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Share-Info.plist"; sourceTree = "<group>"; };
+		8BD06089FD6D23BA059E825E /* StickerizeKit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = StickerizeKit; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		3ECCD82740D19383DD1C8B8A /* App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = App;
+			sourceTree = "<group>";
+		};
+		A5A41521C68A91FEFD5C8725 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		4858EE5CFB5DC6D842BA3633 /* MessagesExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MessagesExtension;
+			sourceTree = "<group>";
+		};
+		81D9CE5D6191C6A9D340BAC6 /* KeyboardExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = KeyboardExtension;
+			sourceTree = "<group>";
+		};
+		95E4EBEED3F4A24F5414492D /* ShareExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ShareExtension;
+			sourceTree = "<group>";
+		};
+		AEF5A0763B08FE3C9B2B5D11 /* StickerizeUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = StickerizeUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		FFEADA95D75BCDA2C6FBEAE0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B532161A1830EBFAF8AD5468 /* StickerizeKit in Frameworks */,
+				C8E05AC16157B5399A7B86FB /* StickerLift in Frameworks */,
+				33DB14E5D7129B3937FC7928 /* StickerExport in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		809A6BF77EEE6FF189FE79E7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CDC0AA896BFF1DB311B478CA /* StickerizeKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		002088D4F399B4B650AE236C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C6AAA8758F55C454FFF5222B /* StickerizeKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		82A3782B8EABA3A0C652376E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D0DF85101388C902887A609C /* StickerizeKit in Frameworks */,
+				7F2BF4770438F93A7D734AAF /* StickerLift in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		57C22F246EC9F947674CB7BA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		71DC27D9F8E3B109C877BFC4 = {
+			isa = PBXGroup;
+			children = (
+				3ECCD82740D19383DD1C8B8A /* App */,
+				A5A41521C68A91FEFD5C8725 /* Shared */,
+				4858EE5CFB5DC6D842BA3633 /* MessagesExtension */,
+				81D9CE5D6191C6A9D340BAC6 /* KeyboardExtension */,
+				95E4EBEED3F4A24F5414492D /* ShareExtension */,
+				AEF5A0763B08FE3C9B2B5D11 /* StickerizeUITests */,
+				8BD06089FD6D23BA059E825E /* StickerizeKit */,
+				89B104369EBC5E85E7E43C6B /* Config */,
+				113236722DEE1DC96F378B9D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		89B104369EBC5E85E7E43C6B /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				06E874E7753D7338DCEA7827 /* Base.xcconfig */,
+				8C708F6ADFB2B8B48ADDA8CA /* AppGroup.entitlements */,
+				E8CD20030D436FD3E0A2E391 /* App-Info.plist */,
+				129EC3E8CADE1D6CDC78B48D /* Messages-Info.plist */,
+				22F25C64FEEA3F81F7371BDA /* Keyboard-Info.plist */,
+				4453D7A15511015EB29A688D /* Share-Info.plist */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		113236722DEE1DC96F378B9D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				49250341B6F9D3BD03DCCEA9 /* Stickerize.app */,
+				197D069F37356616ADD1415F /* StickerizeMessages.appex */,
+				BFA1E0F9152478D856BA6E4F /* StickerizeKeyboard.appex */,
+				0C0FC2086DC1D5DE7D6D28CE /* StickerizeShare.appex */,
+				CD40A90F8068BEFA833205D8 /* StickerizeUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		F01C2E624E08A72BC055B46F /* Stickerize */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F2EF0BFE4C820F767E4303FC /* Build configuration list for PBXNativeTarget "Stickerize" */;
+			buildPhases = (
+				F927BC1DF9D9402659F50E5D /* Sources */,
+				FFEADA95D75BCDA2C6FBEAE0 /* Frameworks */,
+				5B79E5318A231EABF0A6DD21 /* Resources */,
+				FCF3278E84DC1D0913840280 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6BA12D9A5BB1FF76A0EC5462 /* PBXTargetDependency */,
+				AFEAC2B7F8A3A4B89E129A2C /* PBXTargetDependency */,
+				2E8315B507AC4CA25B459EAD /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				3ECCD82740D19383DD1C8B8A /* App */,
+				A5A41521C68A91FEFD5C8725 /* Shared */,
+			);
+			name = Stickerize;
+			packageProductDependencies = (
+				944AD763CD7ABD91CAB7DE6A /* StickerizeKit */,
+				966CBB520972790A4988BABA /* StickerLift */,
+				FF5C5E24EBFE5CF255772229 /* StickerExport */,
+			);
+			productName = Stickerize;
+			productReference = 49250341B6F9D3BD03DCCEA9 /* Stickerize.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A200F17E73C1F637EB55292D /* StickerizeMessages */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9BE6677C26284A1B36BF68E3 /* Build configuration list for PBXNativeTarget "StickerizeMessages" */;
+			buildPhases = (
+				0BEC82147FBB950098B7C021 /* Sources */,
+				809A6BF77EEE6FF189FE79E7 /* Frameworks */,
+				808957A7A1D4BE177665AD95 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				4858EE5CFB5DC6D842BA3633 /* MessagesExtension */,
+			);
+			name = StickerizeMessages;
+			packageProductDependencies = (
+				AD7E79AA2F0F98E99AF6AE63 /* StickerizeKit */,
+			);
+			productName = StickerizeMessages;
+			productReference = 197D069F37356616ADD1415F /* StickerizeMessages.appex */;
+			productType = "com.apple.product-type.app-extension.messages";
+		};
+		E74B63B46FD964E17DF743D4 /* StickerizeKeyboard */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8F70ED793C957B568C5606B8 /* Build configuration list for PBXNativeTarget "StickerizeKeyboard" */;
+			buildPhases = (
+				2167FC1F7CBDA3A23FA34AA9 /* Sources */,
+				002088D4F399B4B650AE236C /* Frameworks */,
+				6C0D31A61F7793D492455BCA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				81D9CE5D6191C6A9D340BAC6 /* KeyboardExtension */,
+			);
+			name = StickerizeKeyboard;
+			packageProductDependencies = (
+				F12F5779081D64B6EA166D7A /* StickerizeKit */,
+			);
+			productName = StickerizeKeyboard;
+			productReference = BFA1E0F9152478D856BA6E4F /* StickerizeKeyboard.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		4C746F2D699A031CE4B1870E /* StickerizeShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A187E5F1098DB950E5246892 /* Build configuration list for PBXNativeTarget "StickerizeShare" */;
+			buildPhases = (
+				4586DAD7556623D38D8DF9A5 /* Sources */,
+				82A3782B8EABA3A0C652376E /* Frameworks */,
+				3E42C5AA4647FB6DBC969069 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				95E4EBEED3F4A24F5414492D /* ShareExtension */,
+				A5A41521C68A91FEFD5C8725 /* Shared */,
+			);
+			name = StickerizeShare;
+			packageProductDependencies = (
+				A77237075294E6382B40B2F2 /* StickerizeKit */,
+				3EA717EAEF463C644A939669 /* StickerLift */,
+			);
+			productName = StickerizeShare;
+			productReference = 0C0FC2086DC1D5DE7D6D28CE /* StickerizeShare.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		3A64ECAF98DFAF2BC218DB7D /* StickerizeUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BB3FC849264C103FB920607D /* Build configuration list for PBXNativeTarget "StickerizeUITests" */;
+			buildPhases = (
+				CBBCCC8449044CDE6E06096D /* Sources */,
+				57C22F246EC9F947674CB7BA /* Frameworks */,
+				791D56EC5DB5B4319F845A8C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2F90E6986B9236D33C4DED73 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AEF5A0763B08FE3C9B2B5D11 /* StickerizeUITests */,
+			);
+			name = StickerizeUITests;
+			packageProductDependencies = (
+			);
+			productName = StickerizeUITests;
+			productReference = CD40A90F8068BEFA833205D8 /* StickerizeUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		46F86FAA6BBF9AC94A7E4595 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2720;
+				LastUpgradeCheck = 2720;
+				TargetAttributes = {
+					F01C2E624E08A72BC055B46F = {
+						CreatedOnToolsVersion = 27.2;
+					};
+					A200F17E73C1F637EB55292D = {
+						CreatedOnToolsVersion = 27.2;
+					};
+					E74B63B46FD964E17DF743D4 = {
+						CreatedOnToolsVersion = 27.2;
+					};
+					4C746F2D699A031CE4B1870E = {
+						CreatedOnToolsVersion = 27.2;
+					};
+					3A64ECAF98DFAF2BC218DB7D = {
+						CreatedOnToolsVersion = 27.2;
+						TestTargetID = F01C2E624E08A72BC055B46F;
+					};
+				};
+			};
+			buildConfigurationList = 32D42B6A09FA42C6EFFC8E0F /* Build configuration list for PBXProject "Stickerize" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 71DC27D9F8E3B109C877BFC4;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				85DDBAE4AAE31FB09FDE6EDB /* XCLocalSwiftPackageReference "StickerizeKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 113236722DEE1DC96F378B9D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F01C2E624E08A72BC055B46F /* Stickerize */,
+				A200F17E73C1F637EB55292D /* StickerizeMessages */,
+				E74B63B46FD964E17DF743D4 /* StickerizeKeyboard */,
+				4C746F2D699A031CE4B1870E /* StickerizeShare */,
+				3A64ECAF98DFAF2BC218DB7D /* StickerizeUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5B79E5318A231EABF0A6DD21 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		808957A7A1D4BE177665AD95 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6C0D31A61F7793D492455BCA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3E42C5AA4647FB6DBC969069 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		791D56EC5DB5B4319F845A8C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F927BC1DF9D9402659F50E5D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0BEC82147FBB950098B7C021 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2167FC1F7CBDA3A23FA34AA9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4586DAD7556623D38D8DF9A5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CBBCCC8449044CDE6E06096D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2F90E6986B9236D33C4DED73 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F01C2E624E08A72BC055B46F /* Stickerize */;
+			targetProxy = 5B1D83299DD1983A5F25B359 /* PBXContainerItemProxy */;
+		};
+		6BA12D9A5BB1FF76A0EC5462 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A200F17E73C1F637EB55292D /* StickerizeMessages */;
+			targetProxy = E6EE38A40F735A62051F3878 /* PBXContainerItemProxy */;
+		};
+		AFEAC2B7F8A3A4B89E129A2C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E74B63B46FD964E17DF743D4 /* StickerizeKeyboard */;
+			targetProxy = EC6D78DA369CCE12BEED328D /* PBXContainerItemProxy */;
+		};
+		2E8315B507AC4CA25B459EAD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4C746F2D699A031CE4B1870E /* StickerizeShare */;
+			targetProxy = 42D35AEE37CAE24089D46183 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		08D1B0DDBC8F69240C81E990 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 06E874E7753D7338DCEA7827 /* Base.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		320644C4979C1B7DC9632144 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 06E874E7753D7338DCEA7827 /* Base.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		0734E3BF1D7D1FE519145A53 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Config/AppGroup.entitlements;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/App-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Stickerize;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Stickerize saves stickers to your library so you can add them to your iPhone stickers.";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID_PREFIX)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		A44521F7D7D0FB5F7D3840DB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Config/AppGroup.entitlements;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/App-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Stickerize;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Stickerize saves stickers to your library so you can add them to your iPhone stickers.";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID_PREFIX)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		F5F16C2B94288A60AFF53C9A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "iMessage App Icon";
+				CODE_SIGN_ENTITLEMENTS = Config/AppGroup.entitlements;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/Messages-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Stickerize;
+				INFOPLIST_KEY_NSStickerSharingLevel = OS;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID_PREFIX).MessagesExtension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		29E5C331D931D8EA8D633144 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "iMessage App Icon";
+				CODE_SIGN_ENTITLEMENTS = Config/AppGroup.entitlements;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/Messages-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Stickerize;
+				INFOPLIST_KEY_NSStickerSharingLevel = OS;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID_PREFIX).MessagesExtension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		770283B0C87633AD9AE944AA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/AppGroup.entitlements;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/Keyboard-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Stickerize;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID_PREFIX).Keyboard";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		A29B0FFB1225658421E1BD9C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/AppGroup.entitlements;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/Keyboard-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Stickerize;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID_PREFIX).Keyboard";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		392CE65A68E00CA2409F7150 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/AppGroup.entitlements;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/Share-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Stickerize;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID_PREFIX).ShareExtension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		3B5BADFE872DC73B6D65FB8B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/AppGroup.entitlements;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/Share-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Stickerize;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID_PREFIX).ShareExtension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		5D682867634DB5F9CBC6A64B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID_PREFIX).UITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TEST_TARGET_NAME = Stickerize;
+			};
+			name = Debug;
+		};
+		768ED6BC1035E3F4882E0565 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID_PREFIX).UITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TEST_TARGET_NAME = Stickerize;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		32D42B6A09FA42C6EFFC8E0F /* Build configuration list for PBXProject "Stickerize" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				08D1B0DDBC8F69240C81E990 /* Debug */,
+				320644C4979C1B7DC9632144 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F2EF0BFE4C820F767E4303FC /* Build configuration list for PBXNativeTarget "Stickerize" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0734E3BF1D7D1FE519145A53 /* Debug */,
+				A44521F7D7D0FB5F7D3840DB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9BE6677C26284A1B36BF68E3 /* Build configuration list for PBXNativeTarget "StickerizeMessages" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F5F16C2B94288A60AFF53C9A /* Debug */,
+				29E5C331D931D8EA8D633144 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8F70ED793C957B568C5606B8 /* Build configuration list for PBXNativeTarget "StickerizeKeyboard" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				770283B0C87633AD9AE944AA /* Debug */,
+				A29B0FFB1225658421E1BD9C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A187E5F1098DB950E5246892 /* Build configuration list for PBXNativeTarget "StickerizeShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				392CE65A68E00CA2409F7150 /* Debug */,
+				3B5BADFE872DC73B6D65FB8B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BB3FC849264C103FB920607D /* Build configuration list for PBXNativeTarget "StickerizeUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5D682867634DB5F9CBC6A64B /* Debug */,
+				768ED6BC1035E3F4882E0565 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		85DDBAE4AAE31FB09FDE6EDB /* XCLocalSwiftPackageReference "StickerizeKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = StickerizeKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		944AD763CD7ABD91CAB7DE6A /* StickerizeKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 85DDBAE4AAE31FB09FDE6EDB /* XCLocalSwiftPackageReference "StickerizeKit" */;
+			productName = StickerizeKit;
+		};
+		966CBB520972790A4988BABA /* StickerLift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 85DDBAE4AAE31FB09FDE6EDB /* XCLocalSwiftPackageReference "StickerizeKit" */;
+			productName = StickerLift;
+		};
+		FF5C5E24EBFE5CF255772229 /* StickerExport */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 85DDBAE4AAE31FB09FDE6EDB /* XCLocalSwiftPackageReference "StickerizeKit" */;
+			productName = StickerExport;
+		};
+		AD7E79AA2F0F98E99AF6AE63 /* StickerizeKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 85DDBAE4AAE31FB09FDE6EDB /* XCLocalSwiftPackageReference "StickerizeKit" */;
+			productName = StickerizeKit;
+		};
+		F12F5779081D64B6EA166D7A /* StickerizeKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 85DDBAE4AAE31FB09FDE6EDB /* XCLocalSwiftPackageReference "StickerizeKit" */;
+			productName = StickerizeKit;
+		};
+		A77237075294E6382B40B2F2 /* StickerizeKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 85DDBAE4AAE31FB09FDE6EDB /* XCLocalSwiftPackageReference "StickerizeKit" */;
+			productName = StickerizeKit;
+		};
+		3EA717EAEF463C644A939669 /* StickerLift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 85DDBAE4AAE31FB09FDE6EDB /* XCLocalSwiftPackageReference "StickerizeKit" */;
+			productName = StickerLift;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 46F86FAA6BBF9AC94A7E4595 /* Project object */;
+}
