@@ -53,7 +53,9 @@ Other platform facts that shaped the design:
 - **Keyboards can only insert text.** `UITextDocumentProxy` has no image or adaptive-glyph API, so the keyboard copies a PNG.
   - With Full Access off, the App Group is **readable but not writable** (current Apple doc; confirmed in the simulator, where
     the keyboard lists the stickers), and pasteboard writes need Full Access.
-  - App Review 4.4.1 requires typed characters and must not depend on Full Access, hence the QWERTY/123 layout.
+  - App Review 4.4.1 asks keyboards to provide typed characters and to work without Full Access. The first version had a
+    QWERTY/123 layout for this. It was later removed at the owner's request so the sticker grid gets the whole keyboard,
+    which is a review risk to address in the review notes.
 - Copies are PNG-only and ≤ 512 px. `pasteboard.image = UIImage` would also publish a JPEG without alpha. Signal keeps
   transparency only up to 512 px, and Telegram's client turns a pasted transparent PNG into a sticker.
 - Apple ships a `[system] StickerKit` module in the device and macOS SDKs but not the simulator SDK, hence the package name `StickerizeKit`.
@@ -66,7 +68,7 @@ See `README.md` for the layout. In short:
 - The **app** imports from Photos, Files, paste, and drag and drop.
 - The **editor** detects subjects, lets you pick subjects by tapping or with chips, and offers crop, outline, name and emoji.
 - The **library** supports copy, share, drag, Save to Photos, reorder to front, delete, and WhatsApp/Telegram export.
-- **Extensions:** the iMessage/Stickers-drawer browser, the keyboard (sticker grid plus a typing layout), and a Share extension using the same editor.
+- **Extensions:** the iMessage/Stickers-drawer browser, the keyboard (a sticker picker), and a Share extension using the same editor.
 - **Storage:** an App Group store with coordinated, atomic writes; a manifest that rebuilds itself from the PNGs if it is lost or
   corrupt; Darwin notifications so every process reloads; and a visible fallback when the App Group is missing.
 
@@ -82,7 +84,7 @@ See `README.md` for the layout. In short:
   - **Screens:** library, editor, detail, setup, selection and WhatsApp export render in light and dark mode.
   - **Copy:** places exactly one pasteboard item, `public.png`, 512 px, with alpha (checked via `simctl pbsync`).
   - **Keyboard:** enabled through simulator preferences, it runs in both the app and Messages. Without Full Access it lists the
-    stickers and shows the banner. The typing layout renders correctly.
+    stickers and shows the banner.
 
 ## 5. Not verified, and why
 

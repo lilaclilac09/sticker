@@ -14,7 +14,7 @@
 			<false/>
 			<key>PrimaryLanguage</key>
 			<string>en-US</string>
-			<!-- Full Access is needed to put a sticker on the pasteboard. Typing works without it. -->
+			<!-- Full Access is needed to put a sticker on the pasteboard. Without it the keyboard only shows the stickers. -->
 			<key>RequestsOpenAccess</key>
 			<true/>
 		</dict>

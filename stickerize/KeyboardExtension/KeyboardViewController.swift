@@ -4,18 +4,15 @@ import UniformTypeIdentifiers
 
 /// Sticker keyboard for apps that don't host iMessage apps (WhatsApp, Telegram, Signal, Slack, Mail…).
 ///
-/// Keyboards can only type text (UITextDocumentProxy has no image API), so tapping a sticker copies its PNG and the
-/// user pastes it. Copying needs Full Access; without it the keyboard still shows the stickers (the App Group is
-/// readable) and works as a basic typing keyboard, as App Review guideline 4.4.1 requires.
-/// Memory is tight in keyboards (tens of MB), so it only decodes small thumbnails and never links Vision.
+/// A sticker picker, not a typing keyboard: keyboards can only insert text (UITextDocumentProxy has no image API), so
+/// tapping a sticker copies its PNG and the user pastes it. Copying needs Full Access; without it the keyboard still
+/// shows the stickers (the App Group is readable) and explains how to turn it on.
+/// Memory is tight in keyboards (tens of MB), so it only decodes cell-sized thumbnails and never links Vision.
 final class KeyboardViewController: UIInputViewController {
-    private enum Mode { case stickers, typing }
-
     private let store = StickerStore.makeDefault()
     private var stickers: [Sticker] = []
     private var observer: StickerChangeObserver?
     private let thumbnails = NSCache<NSUUID, UIImage>()
-    private var mode = Mode.stickers
 
     private lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: makeLayout())
     /// Centred over the grid when there are no stickers.
@@ -23,10 +20,7 @@ final class KeyboardViewController: UIInputViewController {
     /// Above the grid when stickers exist but Full Access is off.
     private let bannerLabel = PaddedLabel()
     private let toastLabel = PaddedLabel()
-    private let typingView = TypingKeysView()
-    private let stickerPanel = UIView()
-    private let globeButton = KeyboardKey.make(systemImage: "globe", label: String(localized: "Next keyboard"))
-    private let stickerGlobeButton = KeyboardKey.make(systemImage: "globe", label: String(localized: "Next keyboard"))
+    private let globeButton = UIButton(type: .system)
     private var toastHideWork: DispatchWorkItem?
     private var heightConstraint: NSLayoutConstraint?
 
@@ -42,7 +36,7 @@ final class KeyboardViewController: UIInputViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        thumbnails.totalCostLimit = 12 * 1024 * 1024
+        thumbnails.totalCostLimit = 20 * 1024 * 1024
         setUpViews()
         observer = store.observeChanges { [weak self] in
             MainActor.assumeIsolated { self?.reload() }
@@ -56,14 +50,10 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     override func viewWillLayoutSubviews() {
-        // On Face ID iPhones the system shows its own globe key below the keyboard.
+        // On Face ID iPhones the system draws its own globe key below the keyboard; elsewhere we must offer one.
         globeButton.isHidden = !needsInputModeSwitchKey
-        stickerGlobeButton.isHidden = !needsInputModeSwitchKey
-        // Shorter in iPhone landscape, like the system keyboard, so the host keeps some of the screen. The window's
-        // shape is checked too, in case the extension's size class doesn't change on rotation.
-        let windowSize = view.window?.bounds.size ?? view.bounds.size
-        let landscapePhone = traitCollection.userInterfaceIdiom == .phone && windowSize.width > windowSize.height
-        heightConstraint?.constant = traitCollection.verticalSizeClass == .compact || landscapePhone ? 186 : 268
+        collectionView.contentInset.bottom = needsInputModeSwitchKey ? 52 : 0
+        heightConstraint?.constant = preferredHeight
         super.viewWillLayoutSubviews()
     }
 
@@ -77,9 +67,14 @@ final class KeyboardViewController: UIInputViewController {
         thumbnails.removeAllObjects()
     }
 
-    override func textDidChange(_ textInput: UITextInput?) {
-        super.textDidChange(textInput)
-        typingView.returnKeyTitle = Self.returnTitle(for: textDocumentProxy.returnKeyType)
+    /// Taller than the system keyboard so a few rows of large stickers fit; shorter in iPhone landscape so the host
+    /// keeps part of the screen. The screen's shape is checked too, in case the size class doesn't change on rotation.
+    /// (Not the window's: a keyboard's window is only keyboard-sized, so it is always wider than tall.)
+    private var preferredHeight: CGFloat {
+        let screenSize = view.window?.windowScene?.screen.bounds.size ?? .zero
+        let landscapePhone = traitCollection.userInterfaceIdiom == .phone && screenSize.width > screenSize.height
+        if traitCollection.verticalSizeClass == .compact || landscapePhone { return 200 }
+        return traitCollection.userInterfaceIdiom == .pad ? 380 : 320
     }
 
     // MARK: Stickers
@@ -111,13 +106,6 @@ final class KeyboardViewController: UIInputViewController {
         showToast(String(localized: "Copied. Touch and hold the message field, then tap Paste."))
     }
 
-    private func setMode(_ newMode: Mode) {
-        mode = newMode
-        stickerPanel.isHidden = newMode != .stickers
-        typingView.isHidden = newMode != .typing
-        if newMode == .stickers { reload() }
-    }
-
     // MARK: Layout
 
     private func setUpViews() {
@@ -134,7 +122,7 @@ final class KeyboardViewController: UIInputViewController {
         messageLabel.adjustsFontForContentSizeCategory = true
         messageLabel.textColor = .secondaryLabel
 
-        bannerLabel.text = String(localized: "To copy stickers, turn on Full Access in Settings › General › Keyboard › Keyboards › Stickerize. Stickerize doesn't send anything you type.")
+        bannerLabel.text = String(localized: "To copy stickers, turn on Full Access in Settings › General › Keyboard › Keyboards › Stickerize.")
         bannerLabel.font = .preferredFont(forTextStyle: .caption1)
         bannerLabel.adjustsFontForContentSizeCategory = true
         bannerLabel.numberOfLines = 0
@@ -155,85 +143,57 @@ final class KeyboardViewController: UIInputViewController {
         toastLabel.alpha = 0
         toastLabel.isUserInteractionEnabled = false
 
-        for button in [globeButton, stickerGlobeButton] {
-            button.addTarget(self, action: #selector(handleInputModeList(from:with:)), for: .allTouchEvents)
-        }
-
-        // Sticker panel: grid plus a bottom row with ABC, globe, a hint and delete.
-        let abcButton = KeyboardKey.make(title: "ABC", label: String(localized: "Letters"))
-        abcButton.addAction(UIAction { [weak self] _ in self?.setMode(.typing) }, for: .touchUpInside)
-        let hint = UILabel()
-        hint.text = String(localized: "Tap a sticker to copy it")
-        hint.font = .preferredFont(forTextStyle: .caption1)
-        hint.textColor = .secondaryLabel
-        hint.textAlignment = .center
-        hint.adjustsFontSizeToFitWidth = true
-        let deleteButton = KeyboardKey.make(systemImage: "delete.left", label: String(localized: "Delete"))
-        KeyboardKey.makeRepeating(deleteButton) { [weak self] in self?.textDocumentProxy.deleteBackward() }
-        let bar = UIStackView(arrangedSubviews: [abcButton, stickerGlobeButton, hint, deleteButton])
-        bar.spacing = 6
-        bar.alignment = .fill
+        var globe = UIButton.Configuration.filled()
+        globe.image = UIImage(systemName: "globe")
+        globe.baseForegroundColor = .label
+        globe.baseBackgroundColor = .secondarySystemBackground
+        globe.cornerStyle = .capsule
+        globeButton.configuration = globe
+        globeButton.accessibilityLabel = String(localized: "Next keyboard")
+        globeButton.addTarget(self, action: #selector(handleInputModeList(from:with:)), for: .allTouchEvents)
+        globeButton.isHidden = true
 
         // The banner sits above the grid (a hidden arranged view takes no space).
         let column = UIStackView(arrangedSubviews: [bannerLabel, collectionView])
         column.axis = .vertical
         column.spacing = 4
         column.isLayoutMarginsRelativeArrangement = true
-        column.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 4, leading: 8, bottom: 0, trailing: 8)
-        for subview in [column, messageLabel, bar] as [UIView] {
-            subview.translatesAutoresizingMaskIntoConstraints = false
-            stickerPanel.addSubview(subview)
-        }
-        NSLayoutConstraint.activate([
-            column.topAnchor.constraint(equalTo: stickerPanel.topAnchor),
-            column.leadingAnchor.constraint(equalTo: stickerPanel.leadingAnchor),
-            column.trailingAnchor.constraint(equalTo: stickerPanel.trailingAnchor),
-            column.bottomAnchor.constraint(equalTo: bar.topAnchor, constant: -6),
-            messageLabel.centerYAnchor.constraint(equalTo: collectionView.centerYAnchor),
-            messageLabel.leadingAnchor.constraint(equalTo: stickerPanel.leadingAnchor, constant: 24),
-            messageLabel.trailingAnchor.constraint(equalTo: stickerPanel.trailingAnchor, constant: -24),
-            bar.leadingAnchor.constraint(equalTo: stickerPanel.leadingAnchor, constant: 4),
-            bar.trailingAnchor.constraint(equalTo: stickerPanel.trailingAnchor, constant: -4),
-            bar.bottomAnchor.constraint(equalTo: stickerPanel.bottomAnchor, constant: -4),
-            bar.heightAnchor.constraint(equalToConstant: 42),
-            abcButton.widthAnchor.constraint(equalToConstant: 56),
-            stickerGlobeButton.widthAnchor.constraint(equalToConstant: 44),
-            deleteButton.widthAnchor.constraint(equalToConstant: 56),
-        ])
+        column.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 6, leading: 6, bottom: 0, trailing: 6)
 
-        typingView.globeButton = globeButton
-        typingView.onText = { [weak self] text in self?.textDocumentProxy.insertText(text) }
-        typingView.onDelete = { [weak self] in self?.textDocumentProxy.deleteBackward() }
-        typingView.onStickers = { [weak self] in self?.setMode(.stickers) }
-        typingView.returnKeyTitle = Self.returnTitle(for: textDocumentProxy.returnKeyType)
-        typingView.isHidden = true
-
-        for subview in [stickerPanel, typingView, toastLabel] as [UIView] {
+        for subview in [column, messageLabel, globeButton, toastLabel] as [UIView] {
             subview.translatesAutoresizingMaskIntoConstraints = false
             inputView.addSubview(subview)
         }
-        let height = inputView.heightAnchor.constraint(equalToConstant: 268)
+        let height = inputView.heightAnchor.constraint(equalToConstant: 320)
         height.priority = .defaultHigh
         heightConstraint = height
         NSLayoutConstraint.activate([
             height,
-            stickerPanel.topAnchor.constraint(equalTo: inputView.topAnchor),
-            stickerPanel.leadingAnchor.constraint(equalTo: inputView.leadingAnchor),
-            stickerPanel.trailingAnchor.constraint(equalTo: inputView.trailingAnchor),
-            stickerPanel.bottomAnchor.constraint(equalTo: inputView.safeAreaLayoutGuide.bottomAnchor),
-            typingView.topAnchor.constraint(equalTo: inputView.topAnchor),
-            typingView.leadingAnchor.constraint(equalTo: inputView.leadingAnchor),
-            typingView.trailingAnchor.constraint(equalTo: inputView.trailingAnchor),
-            typingView.bottomAnchor.constraint(equalTo: inputView.safeAreaLayoutGuide.bottomAnchor),
+            column.topAnchor.constraint(equalTo: inputView.topAnchor),
+            column.leadingAnchor.constraint(equalTo: inputView.leadingAnchor),
+            column.trailingAnchor.constraint(equalTo: inputView.trailingAnchor),
+            column.bottomAnchor.constraint(equalTo: inputView.safeAreaLayoutGuide.bottomAnchor),
+            messageLabel.centerYAnchor.constraint(equalTo: collectionView.centerYAnchor),
+            messageLabel.leadingAnchor.constraint(equalTo: inputView.leadingAnchor, constant: 24),
+            messageLabel.trailingAnchor.constraint(equalTo: inputView.trailingAnchor, constant: -24),
+            globeButton.leadingAnchor.constraint(equalTo: inputView.leadingAnchor, constant: 10),
+            globeButton.bottomAnchor.constraint(equalTo: inputView.safeAreaLayoutGuide.bottomAnchor, constant: -6),
+            globeButton.widthAnchor.constraint(equalToConstant: 44),
+            globeButton.heightAnchor.constraint(equalToConstant: 44),
             toastLabel.topAnchor.constraint(equalTo: inputView.topAnchor, constant: 10),
             toastLabel.centerXAnchor.constraint(equalTo: inputView.centerXAnchor),
             toastLabel.widthAnchor.constraint(lessThanOrEqualTo: inputView.widthAnchor, constant: -32),
         ])
     }
 
+    /// Three columns on an iPhone in portrait (cells of about 130 pt); more on wider screens.
+    private static func columnCount(forWidth width: CGFloat) -> Int {
+        max(3, Int(width / 130))
+    }
+
     private func makeLayout() -> UICollectionViewLayout {
         UICollectionViewCompositionalLayout { _, environment in
-            let columns = max(4, Int(environment.container.effectiveContentSize.width / 88))
+            let columns = Self.columnCount(forWidth: environment.container.effectiveContentSize.width)
             let fraction = 1 / CGFloat(columns)
             let item = NSCollectionLayoutItem(layoutSize: .init(widthDimension: .fractionalWidth(fraction),
                                                                 heightDimension: .fractionalWidth(fraction)))
@@ -273,18 +233,6 @@ final class KeyboardViewController: UIInputViewController {
             }
         }
     }
-
-    private static func returnTitle(for type: UIReturnKeyType?) -> String {
-        switch type ?? .default {
-        case .go: String(localized: "go")
-        case .search, .google, .yahoo: String(localized: "search")
-        case .send: String(localized: "send")
-        case .done: String(localized: "done")
-        case .next: String(localized: "next")
-        case .join: String(localized: "join")
-        default: String(localized: "return")
-        }
-    }
 }
 
 extension KeyboardViewController: UICollectionViewDataSource, UICollectionViewDelegate {
@@ -299,7 +247,9 @@ extension KeyboardViewController: UICollectionViewDataSource, UICollectionViewDe
         cell.imageView.image = nil
         cell.accessibilityLabel = sticker.name
         cell.contentView.alpha = hasFullAccess ? 1 : 0.5
-        let pixels = Int(88 * traitCollection.displayScale)
+        // Decode at the cell's real size (stickers are at most 618 px, so this never upscales).
+        let side = collectionView.bounds.width / CGFloat(Self.columnCount(forWidth: collectionView.bounds.width))
+        let pixels = max(64, Int(side * traitCollection.displayScale))
         thumbnail(for: sticker, pixelSize: pixels) { [weak cell] image in
             guard let cell, cell.stickerID == sticker.id else { return }
             cell.imageView.image = image

@@ -6,8 +6,8 @@ Turn any photo or image into stickers, then use them everywhere:
   context, so iOS also lists it in the emoji keyboard's Stickers section (any app), FaceTime and Markup.
 - **WhatsApp and Telegram packs.** Pick 3–30 stickers (WhatsApp) or up to 120 (Telegram) and add them through each app's
   official import API. They then live in that app's own sticker picker.
-- **Any other app** (Signal, Slack, Mail…): the Stickerize keyboard copies a sticker so you can paste it. It also works as a
-  plain typing keyboard.
+- **Any other app** (Signal, Slack, Mail…): the Stickerize keyboard is a sticker picker. Tap a sticker to copy it, then
+  paste it into the chat.
 - **Share, copy, drag, Save to Photos** from the app. From Photos you can add a sticker to the iPhone's own sticker library
   with *Add Sticker*; no API exists for apps to do that directly.
 
@@ -29,7 +29,7 @@ Everything lives in `stickerize/`:
 | `App/` | SwiftUI container app: library, import, sticker page, WhatsApp/Telegram export, setup guide. |
 | `Shared/` | The sticker editor and import helpers, compiled into the app and the Share extension. |
 | `MessagesExtension/` | iMessage app: `MSStickerBrowserViewController` over the shared library. |
-| `KeyboardExtension/` | Sticker keyboard (tap to copy) plus a QWERTY/123 typing layout. |
+| `KeyboardExtension/` | Sticker keyboard: a grid of your stickers; tap one to copy it. |
 | `ShareExtension/` | "Stickerize" in the share sheet, same editor as the app. |
 | `StickerizeKit/` | Swift package. `StickerizeKit`: storage, decoding, normalization (no Vision, safe for every extension). `StickerLift`: Vision subject lifting and outlines. `StickerExport`: WhatsApp/Telegram payloads (libwebp). `stickerize`: the CLI. Plus tests. |
 | `samples/` | Test photos used by the package tests and the CLI examples. |
@@ -78,7 +78,7 @@ The scheme's Test action runs the same package tests plus the UI tests in the si
   **+ › Stickers**.
 - **Keyboard:** Settings › General › Keyboard › Keyboards › Add New Keyboard › **Stickerize**. Then tap Stickerize and
   turn on **Allow Full Access**, which copying stickers needs. Without it, the keyboard still shows your stickers and
-  types normally. The keyboard has no network code.
+  explains how to turn it on. The keyboard has no network code and doesn't type text.
 - **WhatsApp / Telegram:** in the app, tap Select, pick stickers, then Add to… › WhatsApp or Telegram.
 
 ## The command-line tool
@@ -96,5 +96,7 @@ to stderr and the output path to stdout. Exit codes: 1 error, 2 usage, 3 no subj
 
 - In the simulator, background removal is unavailable (the editor says so and uses the whole image). Test it on a device.
 - Declaring the media context means the iMessage app lives in the Stickers drawer rather than the Messages app list.
+- The keyboard is a sticker picker with no typing keys. App Review guideline 4.4.1 asks keyboards to provide typed
+  input, so expect to explain this in review notes. The typing layout is in the git history if review insists.
 - WhatsApp and Telegram import, the keyboard's Full Access behaviour and how other apps treat pasted stickers have been
   checked against each project's source and docs, not on a device. See [`stickerize/REVIEW.md`](stickerize/REVIEW.md) for what was verified and how.
