@@ -67,7 +67,7 @@ struct StickerEditorView: View {
             Section {
                 canvas
                     .listRowInsets(EdgeInsets())
-                if model.analysis != nil, model.removeBackground {
+                if model.analysis != nil, model.removeBackground, !model.isAnimationMode {
                     Picker("View", selection: $showsSubjects) {
                         Text("Sticker").tag(false)
                         Text("Pick Subjects").tag(true)
@@ -78,7 +78,7 @@ struct StickerEditorView: View {
                 statusText
             }
 
-            if let analysis = model.analysis, model.removeBackground, analysis.instances.count > 1 {
+            if let analysis = model.analysis, model.removeBackground, analysis.instances.count > 1, !model.isAnimationMode {
                 Section("Subjects") {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack {
@@ -97,15 +97,27 @@ struct StickerEditorView: View {
                 }
             }
 
-            Section {
-                // Shown off (and disabled) when Vision isn't available, so the switch matches what will be saved.
-                Toggle("Remove Background", isOn: Binding(get: { model.removeBackground && model.analysis != nil },
-                                                          set: { model.removeBackground = $0 }))
-                    .disabled(model.analysis == nil)
-                Toggle("Crop to Subject", isOn: $model.cropToSubject)
-                Picker("Outline", selection: $model.outline) {
-                    ForEach(OutlineStyle.allCases) { style in
-                        Text(style.title).tag(style)
+            if model.animation != nil {
+                Section {
+                    Toggle("Keep Animation", isOn: $model.keepAnimation)
+                } footer: {
+                    Text(model.keepAnimation
+                         ? "Saved as an animated GIF, kept whole. WhatsApp and Telegram packs get its first frame."
+                         : "Saved as a still from the first frame, which you can cut out and outline.")
+                }
+            }
+
+            if !model.isAnimationMode {
+                Section {
+                    // Shown off (and disabled) when Vision isn't available, so the switch matches what will be saved.
+                    Toggle("Remove Background", isOn: Binding(get: { model.removeBackground && model.analysis != nil },
+                                                              set: { model.removeBackground = $0 }))
+                        .disabled(model.analysis == nil)
+                    Toggle("Crop to Subject", isOn: $model.cropToSubject)
+                    Picker("Outline", selection: $model.outline) {
+                        ForEach(OutlineStyle.allCases) { style in
+                            Text(style.title).tag(style)
+                        }
                     }
                 }
             }
@@ -170,6 +182,10 @@ struct StickerEditorView: View {
             if let loadError = model.loadError {
                 ContentUnavailableView("Can't Open This Image", systemImage: "photo.badge.exclamationmark",
                                        description: Text(loadError))
+            } else if model.isAnimationMode, let animated = model.animatedPreview {
+                AnimatedStickerView(image: animated)
+                    .padding(12)
+                    .accessibilityLabel(Text("Animated sticker preview"))
             } else if showsSubjects, model.analysis != nil, model.removeBackground, let source = model.source {
                 subjectPicker(source)
             } else if let preview = model.preview {
@@ -182,7 +198,7 @@ struct StickerEditorView: View {
                 Text("Pick at least one subject")
                     .foregroundStyle(.secondary)
             }
-            if model.loadError == nil, model.isRendering || model.isSaving || isDetecting {
+            if model.loadError == nil, model.isRendering || model.isSaving || (isDetecting && !model.isAnimationMode) {
                 ProgressView()
                     .controlSize(.large)
                     .padding()
@@ -227,6 +243,15 @@ struct StickerEditorView: View {
 
     @ViewBuilder
     private var statusText: some View {
+        if model.isAnimationMode, let animation = model.animation {
+            Text("Animated: \(animation.frames.count) frames, \(animation.duration.formatted(.number.precision(.fractionLength(1)))) s.")
+        } else {
+            subjectStatusText
+        }
+    }
+
+    @ViewBuilder
+    private var subjectStatusText: some View {
         switch model.subjects {
         case .detecting:
             if model.loadError != nil {

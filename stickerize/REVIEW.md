@@ -74,7 +74,7 @@ See `README.md` for the layout. In short:
 
 ## 4. Verification
 
-- `swift test` on macOS: **61 tests** pass: core 41, Vision/outline 12, export 8.
+- `swift test` on macOS: **68 tests** pass: core 48, Vision/outline 12, export 8.
 - The same bundles run **inside the iOS 27.2 simulator** (`simctl spawn … xctest`): core 38/38 and export 8/8 pass. Outlines 3/3
   pass, and the 9 Vision tests skip as expected.
 - `xcodebuild` builds for the simulator and for device (`CODE_SIGNING_ALLOWED=NO`, compile only) with **zero warnings**.
@@ -150,3 +150,37 @@ Found in the simulator rather than by the reviewers:
 - **Photos imports were always named "Sticker".** The picked file's name was discarded. Imports now keep the delivered
   file name and convert it (`StickerName`): "funny_cat.png" becomes "funny cat". Camera, screenshot and temporary names
   such as `IMG_1234` still get "Sticker".
+
+## 8. Animated stickers
+
+Added after device testing, at the owner's request.
+
+Where a GIF can go:
+- **iMessage:** `MSSticker.h` allows GIF alongside PNG, under the same 500 KB and 300–618 px limits.
+- **Signal** (Signal-iOS 3ace2d5, `PasteboardAttachment.swift`, `MimeTypeUtil.swift`): a pasted `com.compuserve.gif`
+  is accepted as an image attachment. GIF is in its definitely-animated set, so it is sent animated.
+- **Telegram** (Telegram-iOS fb0e62b, `ChatTextInputPanelNode.handlePastedMedia`): a pasted GIF is sent as a GIF
+  animation, not a sticker. A pasted `public.heics` takes the animated-sticker path; that isn't used yet.
+- **WhatsApp:** animated stickers need animated WebP in all-animated packs. Not done: packs use each sticker's first frame.
+
+How it works:
+- Imports with more than one frame (GIF, APNG, animated WebP, HEICS) are decoded with each frame's own delay and the
+  loop count. Delays under 20 ms play at 100 ms, as browsers do. Frames are sampled evenly to stay within a memory
+  budget: 48 MB in the app, 24 MB in the Share extension.
+- `AnimatedStickerEncoder` writes GIF under the same canvas rules as stills. When it's over 500 KB, it first shrinks to
+  about 420 px, then drops every other frame while staying at or above 8 fps (dropped frames' time goes to the kept
+  ones), then shrinks to the 300 px minimum, then drops more frames.
+- Stickers record their format in the manifest. Manifests without it are PNG.
+- The keyboard and Copy put the GIF bytes alone on the pasteboard (`com.compuserve.gif`, checked with `simctl pbsync`).
+- Grids show the first frame with a GIF badge; the editor and sticker page play the animation.
+
+Measured in the simulator:
+
+| Input | Result |
+| --- | --- |
+| 16-frame transparent GIF, 554 KB | 16 frames, 451 px, 479 KB |
+| 16-frame animated WebP | 16 frames, 473 px, 473 KB |
+| 60-frame 800×600 photo GIF, 21 MB | 30 frames, 300 px, 433 KB |
+
+All three kept their full duration. A first encoder version alternated shrinking and dropping frames, and left the
+photo GIF at 4 frames; the order above fixed that.

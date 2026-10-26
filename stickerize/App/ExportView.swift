@@ -35,6 +35,12 @@ struct ExportView: View {
                             .font(.footnote)
                     }
                 }
+                if stickers.contains(where: \.isAnimated) {
+                    Section {
+                        Label("Animated stickers are added as still images (their first frame).", systemImage: "photo")
+                            .font(.footnote)
+                    }
+                }
                 if !messenger.isInstalled {
                     Section {
                         Label("\(messenger.name) doesn't seem to be installed.", systemImage: "exclamationmark.triangle")

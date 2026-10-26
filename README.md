@@ -14,7 +14,13 @@ Turn any photo or image into stickers, then use them everywhere:
 Stickers come from Photos (multi-select), Files (any format ImageIO reads, plus page 1 of a PDF), the pasteboard,
 drag and drop, or the share sheet ("Stickerize"). The editor lifts every foreground subject with Vision. You choose
 which subjects to keep, and you can crop to the subject, add a white outline, and set a name and emoji. Every saved
-sticker is normalized to what `MSSticker.h` requires: PNG, each side 300–618 px, ≤ 500 KB.
+sticker is normalized to what `MSSticker.h` requires: each side 300–618 px, ≤ 500 KB.
+
+**Animated stickers:** animated GIF, APNG, WebP and HEICS imports become animated GIF stickers, kept whole (no
+cut-out). They play in Messages and the Stickers drawer, and the keyboard and Copy hand other apps the GIF itself.
+Signal sends a pasted GIF as an animated image; Telegram sends it as a GIF animation. WhatsApp and Telegram pack exports
+use the first frame. To make a still instead, turn off Keep Animation in the editor; the first frame can then be cut
+out like any photo.
 
 `stickerize`, the original macOS command-line tool, is rebuilt on the same library (see below).
 
@@ -68,8 +74,8 @@ and registered by automatic signing (`REGISTER_APP_GROUPS`). Nothing else needs 
 cd stickerize/StickerizeKit && swift test
 ```
 
-61 tests cover decoding, orientation, normalization limits, naming, the store, Vision lifting on the samples, outlines
-and the WebP/pack payloads. Vision tests run on the Mac only: Vision's instance masks don't run in the iOS Simulator.
+68 tests cover decoding, orientation, normalization limits, animated GIFs, naming, the store, Vision lifting on the
+samples, outlines and the WebP/pack payloads. Vision tests run on the Mac only: Vision's instance masks don't run in the iOS Simulator.
 The scheme's Test action runs the same package tests plus the UI tests in the simulator.
 
 ## Turning it on

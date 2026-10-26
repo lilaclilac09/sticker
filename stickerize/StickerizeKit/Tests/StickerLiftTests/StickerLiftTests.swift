@@ -93,7 +93,7 @@ final class SubjectLifterTests: XCTestCase {
     func testRecipeProducesValidSticker() throws {
         let analysis = try analyze("test2.jpg", maxPixelSize: StickerSpec.importMaxPixelDimension)
         let encoded = try StickerMaker.make(analysis.image, analysis: analysis, recipe: StickerRecipe(outlineFraction: 0.02))
-        XCTAssertLessThanOrEqual(encoded.pngData.count, StickerSpec.maxFileBytes)
+        XCTAssertLessThanOrEqual(encoded.data.count, StickerSpec.maxFileBytes)
         XCTAssertEqual(max(encoded.pixelWidth, encoded.pixelHeight), StickerSpec.maxPixelDimension)
         XCTAssertGreaterThanOrEqual(min(encoded.pixelWidth, encoded.pixelHeight), StickerSpec.minPixelDimension)
     }

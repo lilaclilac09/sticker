@@ -95,13 +95,14 @@ final class KeyboardViewController: UIInputViewController {
             showToast(String(localized: "Turn on Full Access in Settings to copy stickers."))
             return
         }
-        guard let data = try? store.pasteboardPNG(for: sticker) else {
+        guard let item = try? store.pasteboardItem(for: sticker) else {
             showToast(String(localized: "That sticker is gone."))
             reload()
             return
         }
-        // PNG bytes only: setting a UIImage would also publish a JPEG without alpha, and some apps prefer it.
-        UIPasteboard.general.setItems([[UTType.png.identifier: data]], options: [.localOnly: true])
+        // The file's bytes only (PNG, or GIF for animated stickers): setting a UIImage would also publish a JPEG
+        // without alpha or animation, and some apps prefer it.
+        UIPasteboard.general.setItems([[item.type.identifier: item.data]], options: [.localOnly: true])
         UIDevice.current.playInputClick()
         showToast(String(localized: "Copied. Touch and hold the message field, then tap Paste."))
     }
@@ -245,7 +246,8 @@ extension KeyboardViewController: UICollectionViewDataSource, UICollectionViewDe
         let sticker = stickers[indexPath.item]
         cell.stickerID = sticker.id
         cell.imageView.image = nil
-        cell.accessibilityLabel = sticker.name
+        cell.badge.isHidden = !sticker.isAnimated
+        cell.accessibilityLabel = sticker.isAnimated ? String(localized: "\(sticker.name), animated") : sticker.name
         cell.contentView.alpha = hasFullAccess ? 1 : 0.5
         // Decode at the cell's real size (stickers are at most 618 px, so this never upscales).
         let side = collectionView.bounds.width / CGFloat(Self.columnCount(forWidth: collectionView.bounds.width))
@@ -271,6 +273,8 @@ private final class ClickingInputView: UIInputView, UIInputViewAudioFeedback {
 private final class StickerCell: UICollectionViewCell {
     static let reuseIdentifier = "StickerCell"
     let imageView = UIImageView()
+    /// "GIF" on animated stickers (the grid shows their first frame, to keep the keyboard's memory low).
+    let badge = UILabel()
     var stickerID: UUID?
 
     override init(frame: CGRect) {
@@ -279,6 +283,22 @@ private final class StickerCell: UICollectionViewCell {
         imageView.frame = contentView.bounds
         imageView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         contentView.addSubview(imageView)
+        badge.text = "GIF"
+        badge.font = .systemFont(ofSize: 10, weight: .bold)
+        badge.textColor = .label
+        badge.backgroundColor = .secondarySystemBackground
+        badge.textAlignment = .center
+        badge.layer.cornerRadius = 4
+        badge.layer.masksToBounds = true
+        badge.isHidden = true
+        badge.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(badge)
+        NSLayoutConstraint.activate([
+            badge.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
+            badge.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 4),
+            badge.widthAnchor.constraint(equalToConstant: 28),
+            badge.heightAnchor.constraint(equalToConstant: 16),
+        ])
         isAccessibilityElement = true
         accessibilityTraits = .button
         accessibilityHint = String(localized: "Copies the sticker so you can paste it")

@@ -7,7 +7,7 @@ final class StickerEncoderTests: XCTestCase {
     /// Review finding 5: full-resolution output was over iMessage's 500 KB limit.
     func testNoiseIsShrunkUntilItFitsTheByteLimit() throws {
         let encoded = try StickerEncoder.encode(TestImages.noise(width: 2048, height: 2048))
-        XCTAssertLessThanOrEqual(encoded.pngData.count, StickerSpec.maxFileBytes)
+        XCTAssertLessThanOrEqual(encoded.data.count, StickerSpec.maxFileBytes)
         XCTAssertLessThanOrEqual(max(encoded.pixelWidth, encoded.pixelHeight), StickerSpec.maxPixelDimension)
         // Noise at 618² is ~1.1 MB, so it must have gone below 618 to fit.
         XCTAssertLessThan(encoded.pixelWidth, StickerSpec.maxPixelDimension)
@@ -46,7 +46,7 @@ final class StickerEncoderTests: XCTestCase {
             let encoded = try StickerEncoder.encode(TestImages.noise(width: width, height: height, seed: UInt64(width * height)))
             XCTAssertGreaterThanOrEqual(min(encoded.pixelWidth, encoded.pixelHeight), 300, "\(width)×\(height)")
             XCTAssertLessThanOrEqual(max(encoded.pixelWidth, encoded.pixelHeight), 618, "\(width)×\(height)")
-            XCTAssertLessThanOrEqual(encoded.pngData.count, 500_000, "\(width)×\(height)")
+            XCTAssertLessThanOrEqual(encoded.data.count, 500_000, "\(width)×\(height)")
         }
     }
 
@@ -59,7 +59,7 @@ final class StickerEncoderTests: XCTestCase {
     func testCustomCanvas() throws {
         let canvas = StickerCanvas(maxPixelDimension: 512, minPixelDimension: 0, maxUpscale: 1, maxBytes: 100_000)
         let encoded = try StickerEncoder.encode(TestImages.noise(width: 512, height: 512), canvas: canvas)
-        XCTAssertLessThanOrEqual(encoded.pngData.count, 100_000)
+        XCTAssertLessThanOrEqual(encoded.data.count, 100_000)
         XCTAssertLessThan(encoded.pixelWidth, 512)
         let small = try StickerEncoder.encode(TestImages.halves(width: 120, height: 80), canvas: canvas)
         XCTAssertEqual(small.pixelWidth, 120, "no upscaling or padding")
@@ -80,7 +80,7 @@ final class StickerEncoderTests: XCTestCase {
         context.setFillColor(CGColor(colorSpace: p3, components: [0, 1, 0, 1])!)
         context.fill(CGRect(x: 0, y: 0, width: 32, height: 64))
         let encoded = try StickerEncoder.encode(context.makeImage()!)
-        let source = CGImageSourceCreateWithData(encoded.pngData as CFData, nil)!
+        let source = CGImageSourceCreateWithData(encoded.data as CFData, nil)!
         let image = CGImageSourceCreateImageAtIndex(source, 0, nil)!
         XCTAssertEqual(image.bitsPerComponent, 8)
         XCTAssertEqual(image.colorSpace?.name, CGColorSpace.sRGB)
@@ -90,7 +90,7 @@ final class StickerEncoderTests: XCTestCase {
 
     @discardableResult
     private func assertPNG(_ encoded: EncodedSticker, file: StaticString = #filePath, line: UInt = #line) throws -> CGImage {
-        let source = try XCTUnwrap(CGImageSourceCreateWithData(encoded.pngData as CFData, nil), file: file, line: line)
+        let source = try XCTUnwrap(CGImageSourceCreateWithData(encoded.data as CFData, nil), file: file, line: line)
         XCTAssertEqual(CGImageSourceGetType(source) as String?, "public.png", file: file, line: line)
         let image = try XCTUnwrap(CGImageSourceCreateImageAtIndex(source, 0, nil), file: file, line: line)
         XCTAssertEqual(image.width, encoded.pixelWidth, file: file, line: line)

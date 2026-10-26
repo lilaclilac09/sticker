@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import UniformTypeIdentifiers
 
 public struct Sticker: Codable, Hashable, Identifiable, Sendable {
     public let id: UUID
@@ -11,11 +12,14 @@ public struct Sticker: Codable, Hashable, Identifiable, Sendable {
     public let pixelWidth: Int
     public let pixelHeight: Int
     public let byteCount: Int
+    /// PNG for stills, GIF for animated stickers.
+    public let format: StickerFormat
 
-    public var fileName: String { id.uuidString + ".png" }
+    public var fileName: String { id.uuidString + "." + format.fileExtension }
+    public var isAnimated: Bool { format == .gif }
 
     public init(id: UUID = UUID(), name: String, emoji: String? = nil, createdAt: Date = Date(),
-                pixelWidth: Int, pixelHeight: Int, byteCount: Int) {
+                pixelWidth: Int, pixelHeight: Int, byteCount: Int, format: StickerFormat = .png) {
         self.id = id
         self.name = name
         self.emoji = emoji
@@ -23,6 +27,20 @@ public struct Sticker: Codable, Hashable, Identifiable, Sendable {
         self.pixelWidth = pixelWidth
         self.pixelHeight = pixelHeight
         self.byteCount = byteCount
+        self.format = format
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        emoji = try container.decodeIfPresent(String.self, forKey: .emoji)
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        pixelWidth = try container.decode(Int.self, forKey: .pixelWidth)
+        pixelHeight = try container.decode(Int.self, forKey: .pixelHeight)
+        byteCount = try container.decode(Int.self, forKey: .byteCount)
+        // Manifests written before animated stickers existed have no format: everything was PNG.
+        format = try container.decodeIfPresent(StickerFormat.self, forKey: .format) ?? .png
     }
 }
 
@@ -119,17 +137,21 @@ public final class StickerStore: Sendable {
         directory.appendingPathComponent(sticker.fileName)
     }
 
-    public func pngData(for sticker: Sticker) throws -> Data {
+    public func data(for sticker: Sticker) throws -> Data {
         try Data(contentsOf: fileURL(for: sticker))
     }
 
-    /// The PNG to put on the pasteboard for pasting into other apps: the sticker scaled to fit
-    /// `StickerSpec.pasteMaxPixelDimension`, alpha kept.
-    public func pasteboardPNG(for sticker: Sticker) throws -> Data {
-        let data = try pngData(for: sticker)
-        guard max(sticker.pixelWidth, sticker.pixelHeight) > StickerSpec.pasteMaxPixelDimension else { return data }
+    /// What to put on the pasteboard for pasting into other apps. Stills: a PNG scaled to fit
+    /// `StickerSpec.pasteMaxPixelDimension`, alpha kept. Animated: the GIF as stored (Signal sends a pasted GIF as an
+    /// animated image, Telegram as a GIF animation).
+    public func pasteboardItem(for sticker: Sticker) throws -> (data: Data, type: UTType) {
+        let data = try data(for: sticker)
+        guard sticker.format == .png,
+              max(sticker.pixelWidth, sticker.pixelHeight) > StickerSpec.pasteMaxPixelDimension else {
+            return (data, sticker.format.type)
+        }
         let image = try ImageLoader.image(from: data, maxPixelSize: StickerSpec.pasteMaxPixelDimension)
-        return try StickerEncoder.pngData(image)
+        return (try StickerEncoder.pngData(image), .png)
     }
 
     // MARK: Writing
@@ -138,10 +160,10 @@ public final class StickerStore: Sendable {
     @discardableResult
     public func add(_ encoded: EncodedSticker, name: String, emoji: String? = nil) throws -> Sticker {
         let sticker = Sticker(name: Self.cleanName(name), emoji: Self.cleanEmoji(emoji), pixelWidth: encoded.pixelWidth,
-                              pixelHeight: encoded.pixelHeight, byteCount: encoded.pngData.count)
+                              pixelHeight: encoded.pixelHeight, byteCount: encoded.data.count, format: encoded.format)
         try createDirectoryIfNeeded()
         let url = fileURL(for: sticker)
-        try encoded.pngData.write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+        try encoded.data.write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
         do {
             try mutate { manifest in
                 // A missing manifest is rebuilt from the PNGs on disk, which already include this one.
@@ -232,11 +254,13 @@ public final class StickerStore: Sendable {
     private func rebuildManifest() -> StickerManifest {
         let files = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: [.creationDateKey])) ?? []
         let stickers: [Sticker] = files.compactMap { url in
-            guard url.pathExtension == "png", let id = UUID(uuidString: url.deletingPathExtension().lastPathComponent),
+            guard let format = StickerFormat(rawValue: url.pathExtension.lowercased()),
+                  let id = UUID(uuidString: url.deletingPathExtension().lastPathComponent),
                   let size = ImageLoader.orientedPixelSize(contentsOf: url) else { return nil }
             let values = try? url.resourceValues(forKeys: [.creationDateKey, .fileSizeKey])
             return Sticker(id: id, name: "Sticker", createdAt: values?.creationDate ?? Date(),
-                           pixelWidth: Int(size.width), pixelHeight: Int(size.height), byteCount: values?.fileSize ?? 0)
+                           pixelWidth: Int(size.width), pixelHeight: Int(size.height), byteCount: values?.fileSize ?? 0,
+                           format: format)
         }
         return StickerManifest(stickers: stickers.sorted { $0.createdAt > $1.createdAt })
     }

@@ -3,10 +3,28 @@ import Foundation
 import ImageIO
 import UniformTypeIdentifiers
 
+/// File format of a saved sticker. Stills are PNG; animated stickers are GIF, which MSSticker and most messengers
+/// accept and animate.
+public enum StickerFormat: String, Codable, Sendable, CaseIterable {
+    case png, gif
+
+    public var fileExtension: String { rawValue }
+
+    public var type: UTType { self == .png ? .png : .gif }
+}
+
 public struct EncodedSticker: Sendable {
-    public let pngData: Data
+    public let data: Data
+    public let format: StickerFormat
     public let pixelWidth: Int
     public let pixelHeight: Int
+
+    public init(data: Data, format: StickerFormat, pixelWidth: Int, pixelHeight: Int) {
+        self.data = data
+        self.format = format
+        self.pixelWidth = pixelWidth
+        self.pixelHeight = pixelHeight
+    }
 }
 
 public enum StickerEncodingError: LocalizedError, Equatable {
@@ -74,7 +92,7 @@ public enum StickerEncoder {
             guard let rendered = context.makeImage() else { throw StickerEncodingError.encodeFailed }
             let data = try pngData(rendered)
             if data.count <= canvas.maxBytes {
-                return EncodedSticker(pngData: data, pixelWidth: width, pixelHeight: height)
+                return EncodedSticker(data: data, format: .png, pixelWidth: width, pixelHeight: height)
             }
             let contentLongest = max(contentWidth, contentHeight)
             guard contentLongest > floor else {

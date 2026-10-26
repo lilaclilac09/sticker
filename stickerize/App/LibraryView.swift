@@ -150,6 +150,9 @@ struct LibraryView: View {
         let thumbnail = Color(uiColor: .secondarySystemBackground)
             .aspectRatio(1, contentMode: .fit)
             .overlay { StickerThumbnail(sticker: sticker, store: library.store).padding(8) }
+            .overlay(alignment: .topLeading) {
+                if sticker.isAnimated { AnimatedBadge().padding(6) }
+            }
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .contentShape(RoundedRectangle(cornerRadius: 16))
             .accessibilityElement()
@@ -176,13 +179,12 @@ struct LibraryView: View {
                     Button("Copy", systemImage: "doc.on.doc") {
                         do { try StickerActions.copy(sticker, from: library.store) } catch { library.show("Couldn't Copy", error) }
                     }
-                    ShareLink(item: StickerPNG(sticker: sticker, store: library.store),
-                              preview: SharePreview(sticker.name))
+                    StickerShareLink(sticker: sticker, store: library.store)
                     Button("Move to Front", systemImage: "arrow.up.to.line") { library.moveToFront(sticker) }
                     Divider()
                     Button("Delete", systemImage: "trash", role: .destructive) { library.delete([sticker.id]) }
                 }
-                .draggable(StickerPNG(sticker: sticker, store: library.store)) {
+                .stickerDraggable(sticker, store: library.store) {
                     StickerThumbnail(sticker: sticker, store: library.store).frame(width: 120, height: 120)
                 }
         }

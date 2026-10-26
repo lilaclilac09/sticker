@@ -12,15 +12,15 @@ extension UTType {
     static let stickerizeSticker = UTType(exportedAs: "ai.qokka.stickerize.sticker", conformingTo: .data)
 }
 
-/// A sticker as a shareable PNG (share sheet, drag and drop). Uses the ≤ 512 px pasteboard copy, which other apps
-/// handle best; transparency is kept.
+/// A still sticker as a shareable PNG (share sheet, drag and drop). Uses the ≤ 512 px pasteboard copy, which other
+/// apps handle best; transparency is kept.
 struct StickerPNG: Transferable {
     let sticker: Sticker
     let store: StickerStore
 
     static var transferRepresentation: some TransferRepresentation {
         DataRepresentation(exportedContentType: .png) { item in
-            try item.store.pasteboardPNG(for: item.sticker)
+            try item.store.pasteboardItem(for: item.sticker).data
         }
         .suggestedFileName { $0.sticker.name + ".png" }
         // An empty marker that only this process sees, so the library can refuse its own tiles as drops.
@@ -29,25 +29,72 @@ struct StickerPNG: Transferable {
     }
 }
 
-@MainActor
-enum StickerActions {
-    /// Copies PNG bytes only. A UIImage would also publish a JPEG without alpha, which some apps prefer.
-    static func copy(_ sticker: Sticker, from store: StickerStore) throws {
-        let data = try store.pasteboardPNG(for: sticker)
-        UIPasteboard.general.setItems([[UTType.png.identifier: data]])
+/// An animated sticker as its GIF.
+struct StickerGIF: Transferable {
+    let sticker: Sticker
+    let store: StickerStore
+
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(exportedContentType: .gif) { item in
+            try item.store.data(for: item.sticker)
+        }
+        .suggestedFileName { $0.sticker.name + ".gif" }
+        DataRepresentation(exportedContentType: .stickerizeSticker) { _ in Data() }
+            .visibility(.ownProcess)
+    }
+}
+
+/// Share button for either kind of sticker.
+struct StickerShareLink: View {
+    let sticker: Sticker
+    let store: StickerStore
+
+    var body: some View {
+        if sticker.isAnimated {
+            ShareLink(item: StickerGIF(sticker: sticker, store: store), preview: SharePreview(sticker.name)) { label }
+        } else {
+            ShareLink(item: StickerPNG(sticker: sticker, store: store), preview: SharePreview(sticker.name)) { label }
+        }
     }
 
-    /// Saves the full-size PNG (with alpha) to Photos, where "Add Sticker" can put it in the system sticker library.
+    private var label: some View {
+        Label("Share…", systemImage: "square.and.arrow.up")
+    }
+}
+
+extension View {
+    /// Drag a sticker out as PNG, or GIF when animated.
+    @ViewBuilder
+    func stickerDraggable(_ sticker: Sticker, store: StickerStore, @ViewBuilder preview: () -> some View) -> some View {
+        if sticker.isAnimated {
+            draggable(StickerGIF(sticker: sticker, store: store), preview: preview)
+        } else {
+            draggable(StickerPNG(sticker: sticker, store: store), preview: preview)
+        }
+    }
+}
+
+@MainActor
+enum StickerActions {
+    /// Copies the file's bytes only (PNG, or GIF when animated). A UIImage would also publish a JPEG without alpha or
+    /// animation, which some apps prefer.
+    static func copy(_ sticker: Sticker, from store: StickerStore) throws {
+        let item = try store.pasteboardItem(for: sticker)
+        UIPasteboard.general.setItems([[item.type.identifier: item.data]])
+    }
+
+    /// Saves the sticker file to Photos: the PNG with alpha, where "Add Sticker" can put it in the system sticker
+    /// library, or the GIF, which Photos keeps animated.
     static func saveToPhotos(_ sticker: Sticker, from store: StickerStore) async throws {
-        let data = try store.pngData(for: sticker)
+        let data = try store.data(for: sticker)
         let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
         guard status == .authorized || status == .limited else { throw PhotosAccessError() }
         try await PHPhotoLibrary.shared().performChanges {
             // Adding the PNG bytes as the photo resource keeps the alpha channel (a UIImage would be re-encoded).
             let request = PHAssetCreationRequest.forAsset()
             let options = PHAssetResourceCreationOptions()
-            options.originalFilename = sticker.name + ".png"
-            options.uniformTypeIdentifier = UTType.png.identifier
+            options.originalFilename = sticker.name + "." + sticker.format.fileExtension
+            options.uniformTypeIdentifier = sticker.format.type.identifier
             request.addResource(with: .photo, data: data, options: options)
         }
     }

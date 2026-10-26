@@ -17,13 +17,26 @@ struct ImportedImage: Identifiable, Sendable {
     let id = UUID()
     let source: Source
     let suggestedName: String
-    /// Longest side to decode at.
+    /// Longest side to decode stills at.
     let maxPixelSize: Int
+    /// Animated GIF, APNG, WebP or HEICS (more than one frame), from the header.
+    let isAnimated: Bool
+    /// Bytes the decoded frames of an animation may take.
+    let animationMemoryBudget: Int
 
+    /// The image as a still (an animation's first frame).
     func decode() throws -> CGImage {
         switch source {
         case let .data(data): try ImageLoader.image(from: data, maxPixelSize: maxPixelSize)
         case let .file(url): try ImageLoader.image(contentsOf: url, maxPixelSize: maxPixelSize)
+        }
+    }
+
+    /// All frames, at sticker size.
+    func decodeAnimation() throws -> AnimatedFrames {
+        switch source {
+        case let .data(data): try AnimatedImageLoader.frames(from: data, memoryBudget: animationMemoryBudget)
+        case let .file(url): try AnimatedImageLoader.frames(contentsOf: url, memoryBudget: animationMemoryBudget)
         }
     }
 }
@@ -38,7 +51,9 @@ enum ImageImport {
 
     static func image(from data: Data, name: String?, maxPixelSize: Int = StickerSpec.importMaxPixelDimension) throws -> ImportedImage {
         guard ImageLoader.isReadable(data) else { throw ImageLoadingError.unreadable }
-        return ImportedImage(source: .data(data), suggestedName: suggestedName(from: name), maxPixelSize: maxPixelSize)
+        return ImportedImage(source: .data(data), suggestedName: suggestedName(from: name), maxPixelSize: maxPixelSize,
+                             isAnimated: AnimatedImageLoader.frameCount(of: data) > 1,
+                             animationMemoryBudget: animationMemoryBudget(forMaxPixelSize: maxPixelSize))
     }
 
     /// A file we already own (a temporary copy); validated from its header.
@@ -47,7 +62,16 @@ enum ImageImport {
             try? FileManager.default.removeItem(at: url)
             throw ImageLoadingError.unreadable
         }
-        return ImportedImage(source: .file(url), suggestedName: suggestedName(from: name), maxPixelSize: maxPixelSize)
+        return ImportedImage(source: .file(url), suggestedName: suggestedName(from: name), maxPixelSize: maxPixelSize,
+                             isAnimated: AnimatedImageLoader.frameCount(contentsOf: url) > 1,
+                             animationMemoryBudget: animationMemoryBudget(forMaxPixelSize: maxPixelSize))
+    }
+
+    /// Callers that work at a reduced size (the Share extension) are memory-limited; give animations half the budget.
+    private static func animationMemoryBudget(forMaxPixelSize maxPixelSize: Int) -> Int {
+        maxPixelSize >= StickerSpec.importMaxPixelDimension
+            ? AnimatedImageLoader.defaultMemoryBudget
+            : AnimatedImageLoader.defaultMemoryBudget / 2
     }
 
     /// Copies a file picked with `.fileImporter` (possibly outside the sandbox, possibly still in iCloud) into our

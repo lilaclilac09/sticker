@@ -79,7 +79,7 @@ final class StickerExportTests: XCTestCase {
         for (seed, side, opaque) in [(UInt64(11), 2048, true), (12, 2048, false), (13, 600, true)] {
             let stored = try StickerEncoder.encode(opaque ? noise(width: side, height: side, seed: seed)
                                                           : noiseBlob(width: side, height: side, seed: seed))
-            let reloaded = try ImageLoader.image(from: stored.pngData)
+            let reloaded = try ImageLoader.image(from: stored.data)
             let png = try StickerPackExport.telegramStickerPNG(reloaded)
             XCTAssertLessThanOrEqual(png.count, 512 * 1024)
             let image = try XCTUnwrap(CGImageSourceCreateImageAtIndex(CGImageSourceCreateWithData(png as CFData, nil)!, 0, nil))

@@ -33,7 +33,9 @@ final class StickerStoreTests: XCTestCase {
         XCTAssertEqual(stickers.map(\.id), [second.id, first.id])
         XCTAssertEqual(stickers[0].name, "Second")
         XCTAssertEqual(stickers[0].pixelWidth, 50)
-        XCTAssertEqual(try store.pngData(for: first), try sample().pngData)
+        XCTAssertEqual(try store.data(for: first), try sample().data)
+        XCTAssertEqual(first.format, .png)
+        XCTAssertTrue(first.fileName.hasSuffix(".png"))
         XCTAssertTrue(FileManager.default.fileExists(atPath: directory.appendingPathComponent("manifest.json").path))
     }
 
@@ -59,6 +61,7 @@ final class StickerStoreTests: XCTestCase {
         let stickers = try store.stickers()
         XCTAssertEqual(stickers.map(\.name), ["Old"])
         XCTAssertNil(stickers[0].emoji)
+        XCTAssertEqual(stickers[0].format, .png, "manifests from before animated stickers are all PNG")
     }
 
     func testUncoordinatedReadMatchesCoordinated() throws {
@@ -71,10 +74,11 @@ final class StickerStoreTests: XCTestCase {
         let big = try store.add(try StickerEncoder.encode(TestImages.halves(width: 1200, height: 600)), name: "Big")
         XCTAssertEqual(big.pixelWidth, 618)
         let pasted = try XCTUnwrap(CGImageSourceCreateImageAtIndex(
-            CGImageSourceCreateWithData(try store.pasteboardPNG(for: big) as CFData, nil)!, 0, nil))
+            CGImageSourceCreateWithData(try store.pasteboardItem(for: big).data as CFData, nil)!, 0, nil))
+        XCTAssertEqual(try store.pasteboardItem(for: big).type, .png)
         XCTAssertEqual(max(pasted.width, pasted.height), 512)
         let small = try store.add(try sample(), name: "Small")
-        XCTAssertEqual(try store.pasteboardPNG(for: small), try store.pngData(for: small), "small stickers are copied as-is")
+        XCTAssertEqual(try store.pasteboardItem(for: small).data, try store.data(for: small), "small stickers are copied as-is")
     }
 
     func testBlankNameBecomesDefault() throws {

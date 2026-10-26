@@ -29,7 +29,11 @@ struct StickerDetailView: View {
             Section {
                 ZStack {
                     CheckerboardBackground()
-                    if let image {
+                    if let image, sticker.isAnimated {
+                        AnimatedStickerView(image: image)
+                            .padding(16)
+                            .accessibilityLabel(Text(sticker.name))
+                    } else if let image {
                         Image(uiImage: image)
                             .resizable()
                             .scaledToFit()
@@ -40,7 +44,7 @@ struct StickerDetailView: View {
                 .aspectRatio(1, contentMode: .fit)
                 .listRowInsets(EdgeInsets())
             } footer: {
-                Text("\(sticker.pixelWidth) × \(sticker.pixelHeight) px · \(sticker.byteCount / 1000) KB")
+                Text("\(sticker.pixelWidth) × \(sticker.pixelHeight) px · \(sticker.byteCount / 1000) KB · \(sticker.format.rawValue.uppercased())")
             }
 
             Section {
@@ -64,9 +68,7 @@ struct StickerDetailView: View {
                         library.show("Couldn't Copy", error)
                     }
                 }
-                ShareLink(item: StickerPNG(sticker: sticker, store: library.store), preview: SharePreview(sticker.name)) {
-                    Label("Share…", systemImage: "square.and.arrow.up")
-                }
+                StickerShareLink(sticker: sticker, store: library.store)
                 Button("Save to Photos", systemImage: "photo.badge.plus") {
                     Task {
                         do {
@@ -98,7 +100,13 @@ struct StickerDetailView: View {
         .onDisappear { save(sticker) }
         .task(id: sticker.id) {
             let url = library.store.fileURL(for: sticker)
-            image = await Task.detached { ImageLoader.thumbnail(contentsOf: url, maxPixelSize: 1024).map { UIImage(cgImage: $0) } }.value
+            let animated = sticker.isAnimated
+            image = await Task.detached {
+                if animated, let frames = try? AnimatedImageLoader.frames(contentsOf: url) {
+                    return frames.playableImage()
+                }
+                return ImageLoader.thumbnail(contentsOf: url, maxPixelSize: 1024).map { UIImage(cgImage: $0) }
+            }.value
         }
         .confirmationDialog("Delete this sticker?", isPresented: $confirmsDelete, titleVisibility: .visible) {
             Button("Delete", role: .destructive) {

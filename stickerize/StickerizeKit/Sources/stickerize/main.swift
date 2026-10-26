@@ -152,7 +152,7 @@ func run(_ options: Options) throws {
         let canvas = StickerCanvas(maxPixelDimension: options.maxSize, minPixelDimension: StickerSpec.minPixelDimension,
                                    maxUpscale: StickerSpec.maxUpscale, maxBytes: options.maxBytes)
         let encoded = try StickerEncoder.encode(rendered, canvas: canvas)
-        png = encoded.pngData
+        png = encoded.data
         size = (encoded.pixelWidth, encoded.pixelHeight)
     }
     let output = options.output ?? defaultOutput(for: options.input)
