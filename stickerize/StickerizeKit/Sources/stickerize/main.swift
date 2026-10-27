@@ -31,13 +31,16 @@ Input can be anything ImageIO reads (JPEG, HEIC, PNG, WebP, …) or a PDF (page 
 Exit status: 0 success, 1 error, 2 usage error, 3 no subject found / background removal unavailable.
 
 Signal pack (folder → Signal Desktop):
-  stickerize signal-pack <input-dir> --output <dir>
-  --max-per-pack N     stickers per pack directory (default \(SignalPackExport.stickerCount.upperBound), max 200)
-  --output DIR         required; never writes into the input directory
+  --output DIR         required; must be outside the input folder, which is never written to
+  --replace            move the pack-NN folders an earlier run left in DIR to the Trash (otherwise the run stops)
+  --max-per-pack N     stickers per pack folder, 1–\(SignalPackExport.stickerCount.upperBound) (default \(SignalPackExport.stickerCount.upperBound))
 
-Converts GIF/JPG/PNG/WebP (e.g. WeChat favorites from export-wechat-emoji) into PNG stills or APNG
-animations ≤ \(SignalPackExport.maxFileBytes / 1024) KB at ~\(SignalPackExport.pixelDimension) px, split into pack-01, pack-02, …
-Upload each pack folder in Signal Desktop: File → Create/Upload Sticker Pack.
+Converts GIF/JPG/PNG/WebP/APNG (e.g. WeChat favorites from export-wechat-emoji) into Signal stickers, split into
+pack-01, pack-02, … Stills become \(SignalPackExport.pixelDimension) px PNGs (Signal re-encodes them; they're checked to fit its
+\(SignalPackExport.maxFileBytes / 1024) KB limit). Animations become square APNGs of up to \(SignalPackExport.pixelDimension) px and \(SignalPackExport.maxFileBytes / 1024) KB that loop forever, as
+Signal requires; one that is too big is reduced to 256 colors, then shrunk and thinned, and kept as a still if it
+still can't fit. Every reduced sticker is listed.
+Upload each pack folder in Signal Desktop: File → Create/upload sticker pack.
 """
 
 struct UsageError: Error { let message: String }
@@ -60,6 +63,7 @@ struct SignalPackOptions {
     var inputDirectory = ""
     var outputDirectory = ""
     var maxPerPack = SignalPackExport.stickerCount.upperBound
+    var replace = false
 }
 
 func log(_ message: String) {
@@ -70,7 +74,7 @@ func parse(_ arguments: [String]) throws -> Options {
     var options = Options()
     var iterator = arguments.makeIterator()
     func value(for flag: String) throws -> String {
-        guard let value = iterator.next() else { throw UsageError(message: "\(flag) needs a value") }
+        guard let value = iterator.next(), !value.hasPrefix("--") else { throw UsageError(message: "\(flag) needs a value") }
         return value
     }
     func positiveInt(_ text: String, _ flag: String) throws -> Int {
@@ -115,16 +119,19 @@ func parseSignalPack(_ arguments: [String]) throws -> SignalPackOptions {
     var options = SignalPackOptions()
     var iterator = arguments.makeIterator()
     func value(for flag: String) throws -> String {
-        guard let value = iterator.next() else { throw UsageError(message: "\(flag) needs a value") }
+        guard let value = iterator.next(), !value.hasPrefix("--") else { throw UsageError(message: "\(flag) needs a value") }
         return value
     }
     while let argument = iterator.next() {
         switch argument {
         case "-h", "--help": print(usage); exit(0)
         case "--output": options.outputDirectory = try value(for: argument)
+        case "--replace": options.replace = true
         case "--max-per-pack":
             let text = try value(for: argument)
-            guard let n = Int(text), n > 0 else { throw UsageError(message: "--max-per-pack needs a positive integer, got \"\(text)\"") }
+            guard let n = Int(text), SignalPackExport.stickerCount.contains(n) else {
+                throw UsageError(message: "--max-per-pack needs a number from 1 to \(SignalPackExport.stickerCount.upperBound) (Signal's limit), got \"\(text)\"")
+            }
             options.maxPerPack = n
         default:
             if argument.hasPrefix("-") { throw UsageError(message: "unknown option \(argument)") }
@@ -134,11 +141,7 @@ func parseSignalPack(_ arguments: [String]) throws -> SignalPackOptions {
     }
     guard !options.inputDirectory.isEmpty else { throw UsageError(message: "missing input directory") }
     guard !options.outputDirectory.isEmpty else { throw UsageError(message: "--output DIR is required (never writes into the input folder)") }
-    let inputURL = URL(fileURLWithPath: options.inputDirectory).standardizedFileURL
-    let outputURL = URL(fileURLWithPath: options.outputDirectory).standardizedFileURL
-    if inputURL.path == outputURL.path || outputURL.path.hasPrefix(inputURL.path + "/") {
-        throw UsageError(message: "--output must be outside the input directory so originals are never overwritten")
-    }
+    // Where the output may go relative to the input is checked by SignalPackExport.writePacks.
     return options
 }
 
@@ -218,24 +221,48 @@ func runSignalPack(_ options: SignalPackOptions) throws {
     guard FileManager.default.fileExists(atPath: input.path, isDirectory: &isDir), isDir.boolValue else {
         throw RunError(errorDescription: "input is not a directory: \(input.path)")
     }
-    let results = try SignalPackExport.writePacks(from: input, to: output, maxPerPack: options.maxPerPack)
-    let total = results.reduce(0) { $0 + $1.stickers.count }
-    let skipped = results.first?.skipped ?? []
-    log("converted \(total) sticker(s) into \(results.count) pack(s); skipped \(skipped.count)")
-    for skip in skipped.prefix(20) {
-        log("  skip \(skip.name): \(skip.reason)")
+    let report: SignalPackExport.Report
+    do {
+        report = try SignalPackExport.writePacks(from: input, to: output, maxPerPack: options.maxPerPack,
+                                                 replacingExisting: options.replace, movingReplacedToTrash: true)
+    } catch let SignalPackError.outputHasPacks(names) {
+        throw RunError(errorDescription: "\(output.path) already has \(names.joined(separator: ", ")) from an earlier run. "
+            + "Pass --replace to move them to the Trash first, or choose another folder.")
     }
-    if skipped.count > 20 { log("  …and \(skipped.count - 20) more") }
-    for result in results {
-        let animated = result.stickers.filter(\.animated).count
-        log("\(result.directory.path): \(result.stickers.count) files (\(animated) animated APNG)")
-        print(result.directory.path)
+    let stickers = report.packs.flatMap(\.stickers)
+    log("converted \(stickers.count) sticker(s) into \(report.packs.count) pack(s); skipped \(report.skipped.count)")
+    for skip in report.skipped {
+        log("  skipped \(skip.name): \(skip.reason)")
+    }
+    let reduced = stickers.filter(\.info.wasReduced)
+    if !reduced.isEmpty {
+        log("reduced to fit Signal's limits (worth a look before uploading):")
+        for sticker in reduced {
+            let path = sticker.fileURL.pathComponents.suffix(2).joined(separator: "/")
+            log("  \(path) (from \(sticker.info.sourceName)): \(describeReduction(sticker.info))")
+        }
+    }
+    for pack in report.packs {
+        let animated = pack.stickers.filter(\.info.animated).count
+        log("\(pack.directory.path): \(pack.stickers.count) files (\(animated) animated APNG)")
+        print(pack.directory.path)
     }
     log("""
-    Next: open Signal Desktop → File → Create/Upload Sticker Pack → drag in one pack folder's files.
+    Next: open Signal Desktop → File → Create/upload sticker pack → drag in one pack folder's files.
     Assign an emoji per sticker, set title/author, Upload, then Install.
     Docs: https://support.signal.org/hc/en-us/articles/360031836512-Stickers
     """)
+}
+
+func describeReduction(_ info: SignalPackExport.StickerInfo) -> String {
+    let size = "\(info.pixelWidth)×\(info.pixelHeight) px" + (info.shrunk ? " (shrunk)" : "")
+    if info.isStillFallback {
+        return "kept as a still, \(size): the \(info.sourceFrameCount)-frame animation can't fit even small and at a low frame rate"
+    }
+    var parts = [size]
+    if info.frameCount < info.sourceFrameCount { parts.append("\(info.frameCount) of \(info.sourceFrameCount) frames") }
+    if info.colorsReduced { parts.append("256 colors") }
+    return parts.joined(separator: ", ")
 }
 
 do {
@@ -255,6 +282,6 @@ do {
     default: exit(1)
     }
 } catch {
-    log("error: \((error as? LocalizedError)?.errorDescription ?? String(describing: error))")
+    log("error: \((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)")
     exit(1)
 }

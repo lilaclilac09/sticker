@@ -31,6 +31,33 @@ public struct AnimatedFrames: Sendable {
         }
         return AnimatedFrames(frames: frames, delays: delays, loopCount: loopCount)
     }
+
+    public var framesPerSecond: Double { Double(frames.count) / max(duration, 0.01) }
+
+    /// Keeps at most one frame per 1/`target` second slot of the timeline (the first frame that starts in each slot),
+    /// adding the dropped frames' time to the kept ones so the timing is unchanged. Unlike `keepingEvery(2)` this can go
+    /// from 10 fps to 8 rather than to 5, and it thins a fast burst even when a long hold keeps the average rate low.
+    /// Frames are dropped only where two start in the same slot.
+    public func resampled(toFramesPerSecond target: Double) -> AnimatedFrames {
+        guard target > 0, frames.count > 1 else { return self }
+        let slot = 1 / target
+        var frames: [CGImage] = []
+        var delays: [Double] = []
+        var time = 0.0
+        var lastSlot = -1
+        for (frame, delay) in zip(self.frames, self.delays) {
+            let index = Int(((time + 1e-6) / slot).rounded(.down))
+            if index > lastSlot {
+                frames.append(frame)
+                delays.append(delay)
+                lastSlot = index
+            } else {
+                delays[delays.count - 1] += delay
+            }
+            time += delay
+        }
+        return AnimatedFrames(frames: frames, delays: delays, loopCount: loopCount)
+    }
 }
 
 public enum AnimatedImageLoader {
@@ -147,16 +174,8 @@ public enum AnimatedStickerEncoder {
             let contentHeight = max(1, Int((Double(first.height) * scale).rounded()))
             let width = max(contentWidth, canvas.minPixelDimension)
             let height = max(contentHeight, canvas.minPixelDimension)
-            let rendered = try current.frames.map { frame in
-                guard let context = ImageOps.makeRGBAContext(width: width, height: height) else {
-                    throw StickerEncodingError.encodeFailed
-                }
-                context.interpolationQuality = .high
-                context.draw(frame, in: CGRect(x: (width - contentWidth) / 2, y: (height - contentHeight) / 2,
-                                               width: contentWidth, height: contentHeight))
-                guard let image = context.makeImage() else { throw StickerEncodingError.encodeFailed }
-                return image
-            }
+            let rendered = try render(current.frames, contentWidth: contentWidth, contentHeight: contentHeight,
+                                      canvasWidth: width, canvasHeight: height)
             let data = try gifData(frames: rendered, delays: current.delays, loopCount: current.loopCount)
             if data.count <= canvas.maxBytes {
                 return EncodedSticker(data: data, format: .gif, pixelWidth: width, pixelHeight: height)
@@ -221,47 +240,18 @@ public enum AnimatedStickerEncoder {
         return data as Data
     }
 
-    /// Same size / frame-thinning ladder as `encode`, but the output is APNG for Signal.
-    public static func encodeAPNG(_ animation: AnimatedFrames, canvas: StickerCanvas) throws -> EncodedSticker {
-        guard let first = animation.frames.first else { throw StickerEncodingError.invalidImage }
-        let longest = Double(animation.frames.map { max($0.width, $0.height) }.max() ?? max(first.width, first.height))
-        var scale = min(Double(canvas.maxPixelDimension) / longest, canvas.maxUpscale)
-        var current = animation
-        let floor = min(Double(StickerSpec.minContentDimension), longest * scale)
-        let comfortable = min(comfortableLongestSide, longest * scale)
-        while true {
-            let contentWidth = max(1, Int((Double(first.width) * scale).rounded()))
-            let contentHeight = max(1, Int((Double(first.height) * scale).rounded()))
-            let width = max(contentWidth, canvas.minPixelDimension)
-            let height = max(contentHeight, canvas.minPixelDimension)
-            let rendered = try current.frames.map { frame -> CGImage in
-                guard let context = ImageOps.makeRGBAContext(width: width, height: height) else {
-                    throw StickerEncodingError.encodeFailed
-                }
-                context.interpolationQuality = .high
-                context.draw(frame, in: CGRect(x: (width - contentWidth) / 2, y: (height - contentHeight) / 2,
-                                               width: contentWidth, height: contentHeight))
-                guard let image = context.makeImage() else { throw StickerEncodingError.encodeFailed }
-                return image
+    /// Draws each frame scaled to `contentWidth`×`contentHeight` and centred on a transparent canvas.
+    public static func render(_ frames: [CGImage], contentWidth: Int, contentHeight: Int,
+                              canvasWidth: Int, canvasHeight: Int) throws -> [CGImage] {
+        try frames.map { frame in
+            guard let context = ImageOps.makeRGBAContext(width: canvasWidth, height: canvasHeight) else {
+                throw StickerEncodingError.encodeFailed
             }
-            let data = try apngData(frames: rendered, delays: current.delays, loopCount: current.loopCount)
-            if data.count <= canvas.maxBytes {
-                return EncodedSticker(data: data, format: .png, pixelWidth: width, pixelHeight: height)
-            }
-            let side = Double(max(contentWidth, contentHeight))
-            let framesPerSecond = Double(current.frames.count) / max(current.duration, 0.01)
-            let shrink = max(0.75, min(0.92, (Double(canvas.maxBytes) / Double(data.count)).squareRoot()))
-            if side > comfortable + 1 {
-                scale = max(scale * shrink, comfortable / longest)
-            } else if current.frames.count > 2, framesPerSecond > smoothFramesPerSecond {
-                current = current.keepingEvery(2)
-            } else if side > floor + 1 {
-                scale = max(scale * shrink, floor / longest)
-            } else if current.frames.count > 2 {
-                current = current.keepingEvery(2)
-            } else {
-                throw StickerEncodingError.cannotFitByteLimit(bytes: data.count, limit: canvas.maxBytes)
-            }
+            context.interpolationQuality = .high
+            context.draw(frame, in: CGRect(x: (canvasWidth - contentWidth) / 2, y: (canvasHeight - contentHeight) / 2,
+                                           width: contentWidth, height: contentHeight))
+            guard let image = context.makeImage() else { throw StickerEncodingError.encodeFailed }
+            return image
         }
     }
 }
