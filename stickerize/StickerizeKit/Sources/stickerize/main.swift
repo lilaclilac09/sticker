@@ -1,14 +1,18 @@
 // stickerize: lift any subjects out of a photo into a sticker-ready transparent PNG, choosing exactly which
 // instances to keep (Photos' "Add Sticker" only takes its main subject). Same pipeline as the iOS app.
+// Also: `stickerize signal-pack <dir>` converts a folder of stickers (e.g. WeChat exports) into Signal Desktop packs.
 
 import CoreGraphics
 import Foundation
 import StickerizeKit
 import StickerLift
+import StickerExport
 
 let usage = """
 usage: stickerize <image> [options]
+       stickerize signal-pack <input-dir> --output <dir> [options]
 
+Subject lift (single image):
   --list               list detected instances (id, area %, bbox in image pixels) and exit
   --include 1,3        keep only these instance ids (default: all)
   --output PATH        where to write the PNG (default: <image name>-sticker.png next to the input)
@@ -25,6 +29,15 @@ By default the output meets MSSticker's rules: canvas between \(StickerSpec.minP
 
 Input can be anything ImageIO reads (JPEG, HEIC, PNG, WebP, …) or a PDF (page 1). EXIF orientation is applied.
 Exit status: 0 success, 1 error, 2 usage error, 3 no subject found / background removal unavailable.
+
+Signal pack (folder → Signal Desktop):
+  stickerize signal-pack <input-dir> --output <dir>
+  --max-per-pack N     stickers per pack directory (default \(SignalPackExport.stickerCount.upperBound), max 200)
+  --output DIR         required; never writes into the input directory
+
+Converts GIF/JPG/PNG/WebP (e.g. WeChat favorites from export-wechat-emoji) into PNG stills or APNG
+animations ≤ \(SignalPackExport.maxFileBytes / 1024) KB at ~\(SignalPackExport.pixelDimension) px, split into pack-01, pack-02, …
+Upload each pack folder in Signal Desktop: File → Create/Upload Sticker Pack.
 """
 
 struct UsageError: Error { let message: String }
@@ -41,6 +54,12 @@ struct Options {
     var maxSize = StickerSpec.maxPixelDimension
     var maxBytes = StickerSpec.maxFileBytes
     var fullSize = false
+}
+
+struct SignalPackOptions {
+    var inputDirectory = ""
+    var outputDirectory = ""
+    var maxPerPack = SignalPackExport.stickerCount.upperBound
 }
 
 func log(_ message: String) {
@@ -89,6 +108,37 @@ func parse(_ arguments: [String]) throws -> Options {
     }
     guard !options.input.isEmpty else { throw UsageError(message: "missing input image") }
     if options.keepBackground, options.include != nil { throw UsageError(message: "--include can't be combined with --keep-background") }
+    return options
+}
+
+func parseSignalPack(_ arguments: [String]) throws -> SignalPackOptions {
+    var options = SignalPackOptions()
+    var iterator = arguments.makeIterator()
+    func value(for flag: String) throws -> String {
+        guard let value = iterator.next() else { throw UsageError(message: "\(flag) needs a value") }
+        return value
+    }
+    while let argument = iterator.next() {
+        switch argument {
+        case "-h", "--help": print(usage); exit(0)
+        case "--output": options.outputDirectory = try value(for: argument)
+        case "--max-per-pack":
+            let text = try value(for: argument)
+            guard let n = Int(text), n > 0 else { throw UsageError(message: "--max-per-pack needs a positive integer, got \"\(text)\"") }
+            options.maxPerPack = n
+        default:
+            if argument.hasPrefix("-") { throw UsageError(message: "unknown option \(argument)") }
+            guard options.inputDirectory.isEmpty else { throw UsageError(message: "only one input directory is supported") }
+            options.inputDirectory = argument
+        }
+    }
+    guard !options.inputDirectory.isEmpty else { throw UsageError(message: "missing input directory") }
+    guard !options.outputDirectory.isEmpty else { throw UsageError(message: "--output DIR is required (never writes into the input folder)") }
+    let inputURL = URL(fileURLWithPath: options.inputDirectory).standardizedFileURL
+    let outputURL = URL(fileURLWithPath: options.outputDirectory).standardizedFileURL
+    if inputURL.path == outputURL.path || outputURL.path.hasPrefix(inputURL.path + "/") {
+        throw UsageError(message: "--output must be outside the input directory so originals are never overwritten")
+    }
     return options
 }
 
@@ -161,8 +211,40 @@ func run(_ options: Options) throws {
     print(output)
 }
 
+func runSignalPack(_ options: SignalPackOptions) throws {
+    let input = URL(fileURLWithPath: options.inputDirectory, isDirectory: true)
+    let output = URL(fileURLWithPath: options.outputDirectory, isDirectory: true)
+    var isDir: ObjCBool = false
+    guard FileManager.default.fileExists(atPath: input.path, isDirectory: &isDir), isDir.boolValue else {
+        throw RunError(errorDescription: "input is not a directory: \(input.path)")
+    }
+    let results = try SignalPackExport.writePacks(from: input, to: output, maxPerPack: options.maxPerPack)
+    let total = results.reduce(0) { $0 + $1.stickers.count }
+    let skipped = results.first?.skipped ?? []
+    log("converted \(total) sticker(s) into \(results.count) pack(s); skipped \(skipped.count)")
+    for skip in skipped.prefix(20) {
+        log("  skip \(skip.name): \(skip.reason)")
+    }
+    if skipped.count > 20 { log("  …and \(skipped.count - 20) more") }
+    for result in results {
+        let animated = result.stickers.filter(\.animated).count
+        log("\(result.directory.path): \(result.stickers.count) files (\(animated) animated APNG)")
+        print(result.directory.path)
+    }
+    log("""
+    Next: open Signal Desktop → File → Create/Upload Sticker Pack → drag in one pack folder's files.
+    Assign an emoji per sticker, set title/author, Upload, then Install.
+    Docs: https://support.signal.org/hc/en-us/articles/360031836512-Stickers
+    """)
+}
+
 do {
-    try run(try parse(Array(CommandLine.arguments.dropFirst())))
+    let args = Array(CommandLine.arguments.dropFirst())
+    if args.first == "signal-pack" {
+        try runSignalPack(try parseSignalPack(Array(args.dropFirst())))
+    } else {
+        try run(try parse(args))
+    }
 } catch let error as UsageError {
     log("error: \(error.message)\n\n\(usage)")
     exit(2)

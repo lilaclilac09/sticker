@@ -158,4 +158,89 @@ final class StickerExportTests: XCTestCase {
         }
         return chunks
     }
+
+    func testSignalStillIsPNGUnder300KB() throws {
+        let url = try writeTempPNG(noiseBlob(width: 600, height: 400, seed: 21), name: "still")
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        let prepared = try SignalPackExport.prepare(contentsOf: url)
+        XCTAssertFalse(prepared.animated)
+        XCTAssertEqual(prepared.fileExtension, "png")
+        XCTAssertLessThanOrEqual(prepared.data.count, SignalPackExport.maxFileBytes)
+        XCTAssertLessThanOrEqual(max(prepared.pixelWidth, prepared.pixelHeight), SignalPackExport.pixelDimension)
+        let image = try XCTUnwrap(CGImageSourceCreateImageAtIndex(CGImageSourceCreateWithData(prepared.data as CFData, nil)!, 0, nil))
+        XCTAssertEqual(image.width, prepared.pixelWidth)
+    }
+
+    func testSignalAnimatedIsAPNGUnder300KB() throws {
+        let url = try writeTempGIF(frames: 6, seed: 22)
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        let prepared = try SignalPackExport.prepare(contentsOf: url)
+        XCTAssertTrue(prepared.animated)
+        XCTAssertEqual(prepared.fileExtension, "apng")
+        XCTAssertLessThanOrEqual(prepared.data.count, SignalPackExport.maxFileBytes)
+        let source = try XCTUnwrap(CGImageSourceCreateWithData(prepared.data as CFData, nil))
+        XCTAssertGreaterThan(CGImageSourceGetCount(source), 1)
+        XCTAssertEqual(CGImageSourceGetType(source) as String?, "public.png")
+    }
+
+    func testSignalWritePacksSplitsAndSkipsInputDir() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("signal-pack-\(UUID().uuidString)", isDirectory: true)
+        let input = root.appendingPathComponent("in", isDirectory: true)
+        let output = root.appendingPathComponent("out", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: input, withIntermediateDirectories: true)
+        for i in 1...5 {
+            _ = try writeTempPNG(noiseBlob(width: 320, height: 320, seed: UInt64(i)), name: "s\(i)", directory: input)
+        }
+        let results = try SignalPackExport.writePacks(from: input, to: output, maxPerPack: 2)
+        XCTAssertEqual(results.count, 3)
+        XCTAssertEqual(results.map(\.stickers.count), [2, 2, 1])
+        for result in results {
+            XCTAssertTrue(result.directory.path.hasPrefix(output.path))
+            XCTAssertFalse(result.directory.path.hasPrefix(input.path + "/"))
+            let files = try FileManager.default.contentsOfDirectory(at: result.directory, includingPropertiesForKeys: nil)
+            XCTAssertEqual(files.count, result.stickers.count)
+            for file in files {
+                XCTAssertEqual(file.pathExtension, "png")
+                let attrs = try FileManager.default.attributesOfItem(atPath: file.path)
+                XCTAssertLessThanOrEqual(attrs[.size] as! Int, SignalPackExport.maxFileBytes)
+            }
+        }
+        // Originals untouched: still 5 files in input.
+        XCTAssertEqual(try SignalPackExport.listImages(in: input).count, 5)
+    }
+
+    func testSignalRejectsOutputInsideInput() throws {
+        // Covered by the CLI; library just needs listImages sorted.
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("signal-list-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        _ = try writeTempPNG(noiseBlob(width: 64, height: 64, seed: 1), name: "b", directory: root)
+        _ = try writeTempPNG(noiseBlob(width: 64, height: 64, seed: 2), name: "a", directory: root)
+        let names = try SignalPackExport.listImages(in: root).map(\.lastPathComponent)
+        XCTAssertEqual(names, ["a.png", "b.png"])
+    }
+
+    private func writeTempPNG(_ image: CGImage, name: String, directory: URL? = nil) throws -> URL {
+        let dir = directory ?? FileManager.default.temporaryDirectory.appendingPathComponent("signal-one-\(UUID().uuidString)", isDirectory: true)
+        if directory == nil { try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true) }
+        let url = dir.appendingPathComponent("\(name).png")
+        try StickerEncoder.pngData(image).write(to: url)
+        return url
+    }
+
+    private func writeTempGIF(frames: Int, seed: UInt64) throws -> URL {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("signal-gif-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        var images: [CGImage] = []
+        var delays: [Double] = []
+        for i in 0..<frames {
+            images.append(noiseBlob(width: 200, height: 200, seed: seed &+ UInt64(i)))
+            delays.append(0.1)
+        }
+        let data = try AnimatedStickerEncoder.gifData(frames: images, delays: delays, loopCount: 0)
+        let url = dir.appendingPathComponent("anim.gif")
+        try data.write(to: url)
+        return url
+    }
 }

@@ -8,6 +8,9 @@ Turn any photo or image into stickers, then use them everywhere:
   official import API. They then live in that app's own sticker picker.
 - **Any other app** (Signal, Slack, Mail…): the Stickerize keyboard is a sticker picker. Tap a sticker to copy it, then
   paste it into the chat.
+- **Signal sticker packs** (Desktop upload): convert a folder of stickers — including WeChat favorites exported with
+  [export-wechat-emoji](https://github.com/liusheng22/export-wechat-emoji) — into PNG / APNG packs with the CLI
+  `stickerize signal-pack`, then upload in Signal Desktop (**File → Create/Upload Sticker Pack**).
 - **Share, copy, drag, Save to Photos** from the app. From Photos you can add a sticker to the iPhone's own sticker library
   with *Add Sticker*; no API exists for apps to do that directly.
 
@@ -37,7 +40,7 @@ Everything lives in `stickerize/`:
 | `MessagesExtension/` | iMessage app: `MSStickerBrowserViewController` over the shared library. |
 | `KeyboardExtension/` | Sticker keyboard: a grid of your stickers; tap one to copy it. |
 | `ShareExtension/` | "Stickerize" in the share sheet, same editor as the app. |
-| `StickerizeKit/` | Swift package. `StickerizeKit`: storage, decoding, normalization (no Vision, safe for every extension). `StickerLift`: Vision subject lifting and outlines. `StickerExport`: WhatsApp/Telegram payloads (libwebp). `stickerize`: the CLI. Plus tests. |
+| `StickerizeKit/` | Swift package. `StickerizeKit`: storage, decoding, normalization (no Vision, safe for every extension). `StickerLift`: Vision subject lifting and outlines. `StickerExport`: WhatsApp/Telegram payloads (libwebp) and Signal Desktop pack prep (PNG/APNG). `stickerize`: the CLI. Plus tests. |
 | `samples/` | Test photos used by the package tests and the CLI examples. |
 | `scripts/` | `make-icons.swift` (draws every icon), `generate-xcodeproj.py` (how the project file was made). |
 
@@ -97,6 +100,23 @@ swift run stickerize ../samples/test3.jpg --include 1 --outline 12 --output pers
 
 Run `stickerize --help` for the options. The output meets the iMessage limits unless you pass `--full-size`. Logs go
 to stderr and the output path to stdout. Exit codes: 1 error, 2 usage, 3 no subject found.
+
+### Signal packs from a folder (WeChat → Signal)
+
+Signal has no iOS pasteboard import like WhatsApp / Telegram. Prepare files on disk, then upload from
+[Signal Desktop](https://signal.org/download/):
+
+1. Export WeChat favorites with [export-wechat-emoji](https://github.com/liusheng22/export-wechat-emoji) (GIF / JPG / PNG folder). Quit WeChat first so the tool can read the DB key.
+2. Convert into Signal-ready packs (originals are never overwritten; output is split into `pack-01`, `pack-02`, … at 200 stickers each — Signal's per-pack limit). Animated GIF becomes APNG; stills become PNG. Each file is ≤ 300 KB at ~512 px:
+
+```bash
+cd stickerize/StickerizeKit
+swift run stickerize signal-pack ~/Downloads/微信表情包_导出_YYYYMMDD_HHMMSS \
+  --output ~/Downloads/Signal贴纸包
+```
+
+3. In Signal Desktop: **File → Create/Upload Sticker Pack** → drag in one `pack-XX` folder's files (not the original WeChat GIFs) → pick an emoji per sticker → set title and author → **Upload** → **Install**.
+4. Official limits: [Stickers](https://support.signal.org/hc/en-us/articles/360031836512-Stickers) (≤ 200 stickers, ≤ 300 KB each, APNG for motion — not GIF).
 
 ## Known limits
 

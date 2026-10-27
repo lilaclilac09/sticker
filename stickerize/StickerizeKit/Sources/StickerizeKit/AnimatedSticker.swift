@@ -198,4 +198,70 @@ public enum AnimatedStickerEncoder {
         guard CGImageDestinationFinalize(destination) else { throw StickerEncodingError.encodeFailed }
         return data as Data
     }
+
+    /// Writes an animated PNG (APNG). Signal Desktop sticker packs accept APNG, not GIF.
+    public static func apngData(frames: [CGImage], delays: [Double], loopCount: Int) throws -> Data {
+        guard !frames.isEmpty, frames.count == delays.count else { throw StickerEncodingError.invalidImage }
+        let data = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(data, UTType.png.identifier as CFString, frames.count, nil) else {
+            throw StickerEncodingError.encodeFailed
+        }
+        CGImageDestinationSetProperties(destination, [
+            kCGImagePropertyPNGDictionary: [kCGImagePropertyAPNGLoopCount: loopCount],
+        ] as CFDictionary)
+        for (frame, delay) in zip(frames, delays) {
+            CGImageDestinationAddImage(destination, frame, [
+                kCGImagePropertyPNGDictionary: [
+                    kCGImagePropertyAPNGDelayTime: delay,
+                    kCGImagePropertyAPNGUnclampedDelayTime: delay,
+                ],
+            ] as CFDictionary)
+        }
+        guard CGImageDestinationFinalize(destination) else { throw StickerEncodingError.encodeFailed }
+        return data as Data
+    }
+
+    /// Same size / frame-thinning ladder as `encode`, but the output is APNG for Signal.
+    public static func encodeAPNG(_ animation: AnimatedFrames, canvas: StickerCanvas) throws -> EncodedSticker {
+        guard let first = animation.frames.first else { throw StickerEncodingError.invalidImage }
+        let longest = Double(animation.frames.map { max($0.width, $0.height) }.max() ?? max(first.width, first.height))
+        var scale = min(Double(canvas.maxPixelDimension) / longest, canvas.maxUpscale)
+        var current = animation
+        let floor = min(Double(StickerSpec.minContentDimension), longest * scale)
+        let comfortable = min(comfortableLongestSide, longest * scale)
+        while true {
+            let contentWidth = max(1, Int((Double(first.width) * scale).rounded()))
+            let contentHeight = max(1, Int((Double(first.height) * scale).rounded()))
+            let width = max(contentWidth, canvas.minPixelDimension)
+            let height = max(contentHeight, canvas.minPixelDimension)
+            let rendered = try current.frames.map { frame -> CGImage in
+                guard let context = ImageOps.makeRGBAContext(width: width, height: height) else {
+                    throw StickerEncodingError.encodeFailed
+                }
+                context.interpolationQuality = .high
+                context.draw(frame, in: CGRect(x: (width - contentWidth) / 2, y: (height - contentHeight) / 2,
+                                               width: contentWidth, height: contentHeight))
+                guard let image = context.makeImage() else { throw StickerEncodingError.encodeFailed }
+                return image
+            }
+            let data = try apngData(frames: rendered, delays: current.delays, loopCount: current.loopCount)
+            if data.count <= canvas.maxBytes {
+                return EncodedSticker(data: data, format: .png, pixelWidth: width, pixelHeight: height)
+            }
+            let side = Double(max(contentWidth, contentHeight))
+            let framesPerSecond = Double(current.frames.count) / max(current.duration, 0.01)
+            let shrink = max(0.75, min(0.92, (Double(canvas.maxBytes) / Double(data.count)).squareRoot()))
+            if side > comfortable + 1 {
+                scale = max(scale * shrink, comfortable / longest)
+            } else if current.frames.count > 2, framesPerSecond > smoothFramesPerSecond {
+                current = current.keepingEvery(2)
+            } else if side > floor + 1 {
+                scale = max(scale * shrink, floor / longest)
+            } else if current.frames.count > 2 {
+                current = current.keepingEvery(2)
+            } else {
+                throw StickerEncodingError.cannotFitByteLimit(bytes: data.count, limit: canvas.maxBytes)
+            }
+        }
+    }
 }
